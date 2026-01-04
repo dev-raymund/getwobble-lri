@@ -15,10 +15,12 @@ import {
     dashboard, 
     users, 
     roles_permissions,
+    products,
 } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { 
+    Archive,
     LayoutGrid, 
     Unlock, 
     Users 
@@ -30,6 +32,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Products',
+        href: products(),
+        icon: Archive,
     },
 ];
 
