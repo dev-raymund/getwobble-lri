@@ -16,12 +16,19 @@ import {
     users, 
     roles_permissions,
     products,
+    categories, 
+    bookings,
+    orders,
 } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { 
     Archive,
+    Calendar,
+    Folder,
+    LayoutDashboard,
     LayoutGrid, 
+    ShoppingCart, 
     Unlock, 
     Users 
 } from 'lucide-react';
@@ -37,6 +44,27 @@ const mainNavItems: NavItem[] = [
         title: 'Products',
         href: products(),
         icon: Archive,
+        permission: [
+            'view products',
+        ], 
+    },
+    {
+        title: 'Categories',
+        href: categories(),
+        icon: Folder,
+        permission: [
+            'view categories',
+        ], 
+    },
+    {
+        title: 'Bookings',
+        href: bookings(),
+        icon: Calendar,
+    },
+    {
+        title: 'Orders',
+        href: orders(),
+        icon: ShoppingCart,
     },
 ];
 
@@ -46,10 +74,7 @@ const footerNavItems: NavItem[] = [
         href: users(),
         icon: Users,
         permission: [
-            'view users', 
-            'create users', 
-            'edit users', 
-            'delete users'
+            'view users',
         ], 
     },
     {
@@ -57,10 +82,7 @@ const footerNavItems: NavItem[] = [
         href: roles_permissions(),
         icon: Unlock,
         permission: [
-            'view role/permissions', 
-            'create role/permissions', 
-            'edit role/permissions', 
-            'delete role/permissions'
+            'view role/permissions',
         ], 
     },
 ];

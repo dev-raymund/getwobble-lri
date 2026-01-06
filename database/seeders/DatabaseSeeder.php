@@ -11,7 +11,7 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
 
-class RolePermissionSeeder extends Seeder
+class DatabaseSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -40,7 +40,17 @@ class RolePermissionSeeder extends Seeder
             'create role/permissions',
             'edit role/permissions',
             'delete role/permissions',
-            
+
+            'view products',
+            'create products',
+            'edit products',
+            'delete products',
+
+            'view categories',
+            'create categories',
+            'edit categories',
+            'delete categories',
+
         ];
 
         foreach ($permissions as $permission) {
@@ -48,14 +58,15 @@ class RolePermissionSeeder extends Seeder
         }
 
         // Roles
+        $superAdmin = Role::firstOrCreate(['name' => 'super-admin']);
         $admin = Role::firstOrCreate(['name' => 'admin']);
-        $therapist = Role::firstOrCreate(['name' => 'therapist']);
+        $vendor = Role::firstOrCreate(['name' => 'vendor']);
         $customer = Role::firstOrCreate(['name' => 'customer']);
 
         // Assign permissions
         $admin->givePermissionTo(Permission::all());
 
-        // Assign role to user
+        // // Assign role to user
         $user->assignRole($admin);
     }
 }

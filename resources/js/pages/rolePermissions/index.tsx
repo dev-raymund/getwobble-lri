@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { ArrowUpDown, Edit, Loader2, Plus, Trash2, X } from 'lucide-react';
 
@@ -43,6 +43,8 @@ import {
     useReactTable,
 } from '@tanstack/react-table';
 
+import { type SharedData } from '@/types';
+
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Roles - Permissions', href: '/roles-permissions' }];
 
 type rolePermission = {
@@ -57,6 +59,12 @@ interface rolesPermissionsPageProps {
 };
 
 export default function Index({ roles_permissions, all_permissions }: rolesPermissionsPageProps) {
+
+    const { auth } = usePage<SharedData>().props;
+    
+    const userRoles = auth.user.roles || [];
+    const userPermissions = auth.user.permissions || [];
+
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState('');
 
@@ -150,7 +158,7 @@ export default function Index({ roles_permissions, all_permissions }: rolesPermi
         }
     };
 
-    const columns: ColumnDef<rolePermission>[] = [
+    let columns: ColumnDef<rolePermission>[] = [
         { accessorKey: 'id', header: 'ID' },
         {
             accessorKey: 'name',
@@ -163,7 +171,8 @@ export default function Index({ roles_permissions, all_permissions }: rolesPermi
                 const roleId = row.original.id;
                 const isEditing = editingRoleId === roleId;
 
-                if (isEditing) {
+                if (isEditing && userPermissions.includes('edit role/permissions')) {
+                    
                     return (
                         <div className="flex items-center gap-2">
                             <Input 
@@ -194,49 +203,54 @@ export default function Index({ roles_permissions, all_permissions }: rolesPermi
 
                 const permissions = getValue<string[]>();
                 const roleId = row.original.id;
-                const isAdding = isAddingPermission === roleId;
+
+                const availablePermissions = all_permissions.filter(p => !permissions.includes(p));
 
                 return (
                     <div className="flex flex-wrap items-center gap-1">
+
                         {permissions?.map((permission, index) => (
                             <span key={index} className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1.5 text-xs capitalize">
                                 {permission}
-                                {editingRoleId === roleId && (
+
+                                {userPermissions.includes('edit role/permissions') && (
                                     <button onClick={() => handleDeleteClick(roleId, permission)} className="ml-1 hover:text-red-600">
                                         <X className="h-3 w-3" />
                                     </button>
                                 )}
+                            
                             </span>
                         ))}
                         
-                        {/* THE ADD BUTTON / SELECTOR */}
-                        {isAdding ? (
-                            <div className="flex items-center gap-2">
-                                <Select onValueChange={setNewPermission}>
-                                    <SelectTrigger className="h-7 w-[150px] text-xs">
-                                        <SelectValue placeholder="Select..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {all_permissions
-                                            .filter(p => !permissions.includes(p)) // Don't show already owned perms
-                                            .map(p => (
-                                                <SelectItem key={p} value={p} className="text-xs capitalize">{p}</SelectItem>
-                                            ))
-                                        }
-                                    </SelectContent>
-                                </Select>
-                                <Button size="sm" className="h-7 px-2" onClick={() => handleAddPermission(roleId)}>Add</Button>
-                                <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setIsAddingPermission(null)}>Cancel</Button>
-                            </div>
-                        ) : (
-                            <Button 
-                                variant="outline" 
-                                size="icon" 
-                                className="h-6 w-6 rounded-full border-dashed"
-                                onClick={() => setIsAddingPermission(roleId)}
-                            >
-                                <Plus className="h-3 w-3" />
-                            </Button>
+                        {availablePermissions.length > 0 && userPermissions.includes('edit role/permissions') && (
+                            isAddingPermission === roleId ? (
+                                <div className="flex items-center gap-2">
+                                    <Select onValueChange={setNewPermission}>
+                                        <SelectTrigger className="h-7 w-[150px] text-xs">
+                                            <SelectValue placeholder="Select..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {all_permissions
+                                                .filter(p => !permissions.includes(p)) // Don't show already owned perms
+                                                .map(p => (
+                                                    <SelectItem key={p} value={p} className="text-xs capitalize">{p}</SelectItem>
+                                                ))
+                                            }
+                                        </SelectContent>
+                                    </Select>
+                                    <Button size="sm" className="h-7 px-2" onClick={() => handleAddPermission(roleId)}>Add</Button>
+                                    <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setIsAddingPermission(null)}>Cancel</Button>
+                                </div>
+                            ) : (
+                                <Button 
+                                    variant="outline" 
+                                    size="icon" 
+                                    className="h-6 w-6 rounded-full border-dashed"
+                                    onClick={() => setIsAddingPermission(roleId)}
+                                >
+                                    <Plus className="h-3 w-3" />
+                                </Button>
+                            )
                         )}
                     </div>
                 );
@@ -247,35 +261,54 @@ export default function Index({ roles_permissions, all_permissions }: rolesPermi
             header: 'Actions',
             cell: ({ row }) => (
                 <div className="flex gap-2">
-                    <Button 
-                        variant={editingRoleId === row.original.id ? "default" : "ghost"} 
-                        size="icon" 
-                        className={editingRoleId === row.original.id ? "" : "text-blue-600"}
-                        onClick={() => handleEditToggle(row.original)}
-                    >
-                        <Edit className="h-4 w-4" />
-                    </Button>
 
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-red-600" 
-                        onClick={() => { 
-                            setSelectedRole(row.original); 
-                            setIsDeleteRoleOpen(true); 
-                        }}
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {userPermissions.includes('edit role/permissions') && (
+                        <Button 
+                            variant={editingRoleId === row.original.id ? "default" : "ghost"} 
+                            size="icon" 
+                            className={editingRoleId === row.original.id ? "" : "text-blue-600"}
+                            onClick={() => handleEditToggle(row.original)}
+                        >
+                            <Edit className="h-4 w-4" />
+                        </Button>
+                    )}
+
+                    {userPermissions.includes('delete role/permissions') && (
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-red-600" 
+                            onClick={() => { 
+                                setSelectedRole(row.original); 
+                                setIsDeleteRoleOpen(true); 
+                            }}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    )}
+
                 </div>
             ),
         },
-    ]
+    ];
+
+    // Hide actions column if user is not admin or super-admin
+    const admins = ['super-admin', 'admin'];
+
+    if (admins.every(role => !userRoles.includes(role))) {
+        columns = columns.filter(col => col.id !== 'actions');
+    }
 
     const table = useReactTable({
         data: roles_permissions,
         columns,
         state: { sorting, globalFilter },
+        initialState: {
+            pagination: {
+                pageSize: 8,
+            },
+        },
+        autoResetPageIndex: false, 
         onSortingChange: setSorting,
         onGlobalFilterChange: setGlobalFilter,
         getCoreRowModel: getCoreRowModel(),
@@ -297,12 +330,14 @@ export default function Index({ roles_permissions, all_permissions }: rolesPermi
                         className="max-w-sm"
                     />
 
-                    <Button 
-                        onClick={() => setIsAddDialogOpen(true)} 
-                        className="bg-blue-600 hover:bg-blue-700"
-                    >
-                        <Plus className="h-4 w-4" /> Add Role
-                    </Button>
+                    {userPermissions.includes('create role/permissions') && (
+                        <Button 
+                            onClick={() => setIsAddDialogOpen(true)} 
+                            className="bg-blue-600 hover:bg-blue-700"
+                        >
+                            <Plus className="h-4 w-4" /> Add Role
+                        </Button>
+                    )}
                 </div>
 
                 <div className="rounded-md border">
@@ -338,6 +373,32 @@ export default function Index({ roles_permissions, all_permissions }: rolesPermi
                             )}
                         </TableBody>
                     </Table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex items-center justify-end space-x-2 py-4">
+                    <div className="flex-1 text-sm text-muted-foreground">
+                        Page {table.getState().pagination.pageIndex + 1} of{" "}
+                        {table.getPageCount()}
+                    </div>
+                    <div className="space-x-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                        >
+                            Next
+                        </Button>
+                    </div>
                 </div>
 
                 {/* MODAL: ADD ROLE */}

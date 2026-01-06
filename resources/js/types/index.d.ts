@@ -35,7 +35,8 @@ export interface User {
     id: number;
     name: string;
     email: string;
-    roles: Role[];
+    roles: string[];
+    permissions: string[];
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;

@@ -130,7 +130,7 @@ class UsersController extends Controller
     /**
      * Remove a specific role from a specific user.
      */
-    public function removeRole(User $user, Role $role)
+    public function revokeRole(User $user, Role $role)
     {
         $user->removeRole($role);
     

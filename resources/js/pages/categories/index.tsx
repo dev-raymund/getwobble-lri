@@ -1,12 +1,13 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useState } from 'react';
-import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Plus, Trash2, X, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Plus, Trash2, X, Loader2, Copy } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -31,24 +32,22 @@ import {
 
 import { type SharedData } from '@/types';
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Categories', href: '/categories' }];
 
-type user = { 
+type category = { 
     id: number; 
     name: string; 
-    email: string; 
-    roles: string[];
+    description: string;
 };
 
-interface usersPageProps { 
-    users: user[]; 
-    all_roles: string[];
+interface categoriesPageProps { 
+    categories: category[];
 };
 
-export default function Index({ users, all_roles }: usersPageProps) {
+export default function Index({ categories }: categoriesPageProps) {
 
     const { auth } = usePage<SharedData>().props;
-
+    
     const userRoles = auth.user.roles || [];
     const userPermissions = auth.user.permissions || [];
 
@@ -57,29 +56,24 @@ export default function Index({ users, all_roles }: usersPageProps) {
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [isDeleteUserOpen, setIsDeleteUserOpen] = useState(false);
-    const [isDeleteRoleOpen, setIsDeleteRoleOpen] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<user | null>(null);
-    const [selectedRole, setSelectedRole] = useState<{ userId: number; role: string } | null>(null);
-    const [isAddingRoleToId, setIsAddingRoleToId] = useState<number | null>(null);
+    const [isDeleteCategoryOpen, setIsDeleteCategoryOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState<category | null>(null);
 
     const addForm = useForm({ 
         name: '', 
-        email: '', 
-        password: '', 
-        password_confirmation: '', 
-        role: '' 
+        description: '',
     });
+
     const editForm = useForm({ 
         id: 0, 
         name: '', 
-        email: '' 
+        description: '',
     });
 
-    const handleAddUser = (e: React.FormEvent) => {
+    const handleAddCategory = (e: React.FormEvent) => {
         e.preventDefault();
         addForm.post(
-            route('users.store'), {
+            route('categories.store'), {
                 onSuccess: () => { 
                     setIsAddDialogOpen(false); 
                     addForm.reset(); 
@@ -88,126 +82,67 @@ export default function Index({ users, all_roles }: usersPageProps) {
         );
     };
 
-    const handleEditClick = (user: user) => {
+    const handleEditClick = (category: category) => {
         editForm.setData({ 
-            id: user.id, 
-            name: user.name, 
-            email: user.email 
+            id: category.id, 
+            name: category.name, 
+            description: (category as any).description,
         });
         setIsEditDialogOpen(true);
     };
 
-    const handleUpdateUser = (e: React.FormEvent) => {
+    const handleUpdateCategory = (e: React.FormEvent) => {
         e.preventDefault();
         editForm.put(
-            route('users.update', { 
-                user: editForm.data.id 
+            route('categories.update', { 
+                category: editForm.data.id 
             }), {
                 onSuccess: () => setIsEditDialogOpen(false)
             }
         );
     };
 
-    const confirmDeleteUser = () => {
-        if (selectedUser) {
+    const handleDuplicateCategory = (category: category) => {
+        addForm.setData({
+            name: `${category.name} (Copy)`,
+            description: (category as any).description || '',
+        });
+
+        router.post(route('categories.store'), {
+            ...category,
+            name: `${category.name} (Copy)`,
+        });
+    };
+
+    const confirmDeleteCategory = () => {
+        if (selectedCategory) {
             router.delete(
-                route('users.destroy', { 
-                    user: selectedUser.id 
+                route('categories.destroy', { 
+                    category: selectedCategory.id 
                 }), {
-                    onSuccess: () => setIsDeleteUserOpen(false)
+                    onSuccess: () => setIsDeleteCategoryOpen(false)
                 }
             );
         }
     };
 
-    const handleAddRole = (userId: number, roleName: string) => {
-        router.post(
-            route('users.roles.store', { 
-                user: userId 
-            }), { 
-                role: roleName 
-            }, {
-                onSuccess: () => setIsAddingRoleToId(null)
-            }
-        );
-    };
 
-    const confirmDeleteRole = () => {
-        if (selectedRole) {
-            router.delete(
-                route('users.roles.revoke', { 
-                    user: selectedRole.userId, 
-                    role: selectedRole.role 
-                }), {
-                    onSuccess: () => setIsDeleteRoleOpen(false)
-                }
-            );
-        }
-    };
-
-    let columns: ColumnDef<user>[] = [
+    let columns: ColumnDef<category>[] = [
         { accessorKey: 'id', header: 'ID' },
         {
             accessorKey: 'name',
-            header: 'Name',
+            header: 'Category Name',
             cell: ({ getValue }) => <span className="font-medium capitalize">{getValue<string>()}</span>,
         },
-        { accessorKey: 'email', header: 'Email' },
         {
-            accessorKey: 'roles',
-            header: 'Roles',
-            cell: ({ row, getValue }) => {
-                const roles = getValue<string[]>();
-                const userId = row.original.id;
-                const availableRoles = all_roles.filter(r => !roles.includes(r));
-                return (
-                    <div className="flex flex-wrap items-center gap-1">
-
-                        {roles?.map((role, i) => (
-                            <span key={i} className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs capitalize">
-                                {role}
-
-                                {userPermissions.includes('edit users') && (
-                                <button 
-                                    onClick={() => { 
-                                        setSelectedRole({ userId, role }); 
-                                        setIsDeleteRoleOpen(true); 
-                                    }} 
-                                    className="hover:text-red-600"
-                                >
-                                    <X className="h-3 w-3" />
-                                </button>
-                                )}
-                                
-                            </span>
-                        ))}
-
-                        {availableRoles.length > 0 && userPermissions.includes('edit users') && (
-                            isAddingRoleToId === userId ? (
-                                <Select onValueChange={(val) => handleAddRole(userId, val)}>
-                                    <SelectTrigger className="h-7 w-[130px] text-xs">
-                                        <SelectValue placeholder="Add..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {availableRoles.map(r => 
-                                            <SelectItem key={r} value={r} className="text-xs">{r}</SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            ) : (
-                                <Button 
-                                    variant="outline" 
-                                    size="icon" 
-                                    className="h-6 w-6 rounded-full border-dashed" 
-                                    onClick={() => setIsAddingRoleToId(userId)}
-                                >
-                                    <Plus className="h-3 w-3" />
-                                </Button>
-                            )
-                        )}
-                    </div>
-                );
-            },
+            accessorKey: 'slug',
+            header: 'Slug',
+            cell: ({ getValue }) => <span className="font-medium">{getValue<string>()}</span>,
+        },
+        {
+            accessorKey: 'description',
+            header: 'Description',
+            cell: ({ getValue }) => <span className="font-medium">{getValue<string>()}</span>,
         },
         {
             id: 'actions',
@@ -215,7 +150,19 @@ export default function Index({ users, all_roles }: usersPageProps) {
             cell: ({ row }) => (
                 <div className="flex gap-2">
 
-                    {userPermissions.includes('edit users') && (
+                    {userPermissions.includes('create categories') && (
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-green-600" 
+                            title="Duplicate Product"
+                            onClick={() => handleDuplicateCategory(row.original)}
+                        >
+                            <Copy className="h-4 w-4" />
+                        </Button>
+                    )}
+
+                    {userPermissions.includes('edit categories') && (
                         <Button 
                             variant="ghost" 
                             size="icon" 
@@ -226,19 +173,20 @@ export default function Index({ users, all_roles }: usersPageProps) {
                         </Button>
                     )}
 
-                    {userPermissions.includes('delete users') && (
+                    {userPermissions.includes('delete categories') && (
                         <Button 
                             variant="ghost" 
                             size="icon" 
                             className="text-red-600" 
                             onClick={() => { 
-                                setSelectedUser(row.original); 
-                                setIsDeleteUserOpen(true); 
+                                setSelectedCategory(row.original); 
+                                setIsDeleteCategoryOpen(true); 
                             }}
                         >
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     )}
+
                 </div>
             ),
         },
@@ -252,7 +200,7 @@ export default function Index({ users, all_roles }: usersPageProps) {
     }
 
     const table = useReactTable({
-        data: users,
+        data: categories,
         columns,
         state: { sorting, globalFilter },
         initialState: {
@@ -271,7 +219,7 @@ export default function Index({ users, all_roles }: usersPageProps) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Users" />
+            <Head title="Categories" />
             <div className="flex flex-1 flex-col gap-4 p-4">
                 <div className="flex items-center justify-between">
                     <Input 
@@ -281,12 +229,12 @@ export default function Index({ users, all_roles }: usersPageProps) {
                         className="max-w-sm" 
                     />
 
-                    {userPermissions.includes('create users') && (
+                    {userPermissions.includes('create categories') && (
                         <Button 
                             onClick={() => setIsAddDialogOpen(true)} 
                             className="bg-blue-600 hover:bg-blue-700"
                         >
-                            <Plus className="h-4 w-4" /> Add User
+                            <Plus className="h-4 w-4" /> Add Category
                         </Button>
                     )}
 
@@ -340,7 +288,7 @@ export default function Index({ users, all_roles }: usersPageProps) {
                                         colSpan={columns.length} 
                                         className="h-24 text-center"
                                     >
-                                        No users found.
+                                        No categories found.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -374,16 +322,16 @@ export default function Index({ users, all_roles }: usersPageProps) {
                     </div>
                 </div>
 
-                {/* MODAL: ADD USER */}
+                {/* MODAL: ADD CATEGORY */}
                 <AlertDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Add New User</AlertDialogTitle>
+                            <AlertDialogTitle>Add New Category</AlertDialogTitle>
                         </AlertDialogHeader>
 
-                        <form id="add-form" onSubmit={handleAddUser} className="space-y-4 py-2">
+                        <form id="add-form" onSubmit={handleAddCategory} className="space-y-4 py-2">
                             <div>
-                                <Label className="mb-2">Name</Label>
+                                <Label className="mb-2">Category Name</Label>
                                 <Input 
                                     value={addForm.data.name} 
                                     onChange={e => addForm.setData('name', e.target.value)} 
@@ -394,41 +342,20 @@ export default function Index({ users, all_roles }: usersPageProps) {
                                     </p>
                                 }
                             </div>
+
                             <div>
-                                <Label className="mb-2">Email</Label>
-                                <Input 
-                                    type="email" 
-                                    value={addForm.data.email} 
-                                    onChange={e => addForm.setData('email', e.target.value)} 
+                                <Label className="mb-2">Description</Label>
+                                <Textarea 
+                                    value={addForm.data.description} 
+                                    onChange={e => addForm.setData('description', e.target.value)} 
                                 />
-                                {addForm.errors.email && 
+                                {addForm.errors.description && 
                                     <p className="text-xs text-red-500 mt-1">
-                                        {addForm.errors.email}
+                                        {addForm.errors.description}
                                     </p>
                                 }
                             </div>
 
-                            <div>
-                                <Label className="mb-2">Password</Label>
-                                <Input 
-                                    type="password" 
-                                    value={addForm.data.password} 
-                                    onChange={e => addForm.setData('password', e.target.value)} 
-                                />
-                                {addForm.errors.password && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {addForm.errors.password}
-                                    </p>
-                                }
-                            </div>
-                            <div>
-                                <Label className="mb-2">Confirm Password</Label>
-                                <Input 
-                                    type="password" 
-                                    value={addForm.data.password_confirmation} 
-                                    onChange={e => addForm.setData('password_confirmation', e.target.value)} 
-                                />
-                            </div>
                         </form>
 
                         <AlertDialogFooter>
@@ -440,19 +367,19 @@ export default function Index({ users, all_roles }: usersPageProps) {
                                 className="bg-blue-600"
                             >
                                 {addForm.processing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                                Add User
+                                Add Category
                             </Button>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
 
-                {/* MODAL: EDIT USER */}
+                {/* MODAL: EDIT CATEGORY */}
                 <AlertDialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Edit User Details</AlertDialogTitle>
+                            <AlertDialogTitle>Edit Category Details</AlertDialogTitle>
                         </AlertDialogHeader>
-                        <form id="edit-form" onSubmit={handleUpdateUser} className="space-y-4 py-2">
+                        <form id="edit-form" onSubmit={handleUpdateCategory} className="space-y-4 py-2">
                             <div>
                                 <Label className="mb-2">Name</Label>
                                 <Input 
@@ -465,19 +392,20 @@ export default function Index({ users, all_roles }: usersPageProps) {
                                     </p>
                                 }
                             </div>
+
                             <div>
-                                <Label className="mb-2">Email</Label>
-                                <Input 
-                                    type="email" 
-                                    value={editForm.data.email} 
-                                    onChange={e => editForm.setData('email', e.target.value)} 
+                                <Label className="mb-2">Description</Label>
+                                <Textarea 
+                                    value={editForm.data.description} 
+                                    onChange={e => editForm.setData('description', e.target.value)} 
                                 />
-                                {editForm.errors.email && 
+                                {editForm.errors.description && 
                                     <p className="text-xs text-red-500 mt-1">
-                                        {editForm.errors.email}
+                                        {editForm.errors.description}
                                     </p>
                                 }
                             </div>
+                            
                         </form>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -493,43 +421,25 @@ export default function Index({ users, all_roles }: usersPageProps) {
                     </AlertDialogContent>
                 </AlertDialog>
 
-                {/* MODAL: DELETE USER */}
-                <AlertDialog open={isDeleteUserOpen} onOpenChange={setIsDeleteUserOpen}>
+                {/* MODAL: DELETE CATEGORY */}
+                <AlertDialog open={isDeleteCategoryOpen} onOpenChange={setIsDeleteCategoryOpen}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>This will permanently delete the user account for {selectedUser?.name}.</AlertDialogDescription>
+                            <AlertDialogDescription>This will permanently delete the category.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction 
-                                onClick={confirmDeleteUser} 
+                                onClick={confirmDeleteCategory} 
                                 className="bg-red-600"
                             >
-                                Delete User
+                                Delete Product
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
 
-                {/* MODAL: REMOVE ROLE */}
-                <AlertDialog open={isDeleteRoleOpen} onOpenChange={setIsDeleteRoleOpen}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Remove Role?</AlertDialogTitle>
-                            <AlertDialogDescription>Remove the "{selectedRole?.role}" role from this user?</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
-                                onClick={confirmDeleteRole} 
-                                className="bg-red-600"
-                            >
-                                Remove
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
             </div>
         </AppLayout>
     );
