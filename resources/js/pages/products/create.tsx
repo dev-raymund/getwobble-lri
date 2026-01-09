@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { MultiSelect } from "@/components/ui/multi-select";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Copy } from 'lucide-react';
 
@@ -27,13 +28,23 @@ type product = {
     author_id: number
 }
 
-interface productPageProps { 
-    product: product,
-    authors: { id: number; name: string }[],
-    categories: string[]
+type author = { 
+    id: number,
+    name: string 
 }
 
-export default function Create({ authors, categories }: productPageProps) {
+type category = {
+    id: number,
+    name: string
+}
+
+interface productPageProps { 
+    product: product,
+    all_authors: author[],
+    all_categories: category[]
+}
+
+export default function Create({ all_authors, all_categories }: productPageProps) {
 
     const { auth } = usePage<SharedData>().props;
 
@@ -47,7 +58,13 @@ export default function Create({ authors, categories }: productPageProps) {
         tax_class: '',
         description: '',
         author_id: '',
+        categories: [] as string[]
     });
+
+    const multiSelectCategories = all_categories.map((category) => ({
+        value: category.name,
+        label: category.name
+    }));
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -186,6 +203,18 @@ export default function Create({ authors, categories }: productPageProps) {
                             }
                         </div>
 
+                        <div className="flex justify-between gap-4">
+                            <div>
+                                <Label className="mb-2">Categories</Label>
+                                <MultiSelect 
+                                    options={multiSelectCategories} 
+                                    placeholder="Select categories..." 
+                                    selected={addForm.data.categories}
+                                    onChange={(values) => addForm.setData('categories', values)}
+                                />
+                            </div>
+                        </div>
+
                         <div>
                             <Label className="mb-2">Author</Label>
                             <Select 
@@ -196,7 +225,7 @@ export default function Create({ authors, categories }: productPageProps) {
                                     <SelectValue placeholder="Select Author" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {authors.map((author) => (
+                                    {all_authors.map((author) => (
                                         <SelectItem key={author.id} value={author.id.toString()}>
                                             {author.name} {author.id === auth.user.id && "(You)"}
                                         </SelectItem>

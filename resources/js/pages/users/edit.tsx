@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Copy } from 'lucide-react';
+import { MultiSelect } from '@/components/ui/multi-select';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Edit User', href: '#' }];
 
@@ -14,6 +15,11 @@ type user = {
     id: number,
     name: string,
     email: string
+}
+
+type role = {
+    id: number,
+    name: string
 }
 
 type billing_address = {
@@ -36,17 +42,20 @@ type shipping_address = {
     country: string
 }
 
-interface EditProps {
+interface editUserPageProps {
     user: user,
+    roles: string[],
     billing_address: billing_address,
-    shipping_address: shipping_address
+    shipping_address: shipping_address,
+    all_roles: role[]
 }
 
-export default function Edit({ user, billing_address, shipping_address }: EditProps) {
-
+export default function Edit({ user, roles, billing_address, shipping_address, all_roles }: editUserPageProps) {
+    
     const { data, setData, put, processing, errors } = useForm({
         name: user.name || '',
         email: user.email || '',
+        roles: roles,
         billing_address_line_1: billing_address?.address_line_1 || '',
         billing_address_line_2: billing_address?.address_line_2 || '',
         billing_phone_number: billing_address?.phone_number || '',
@@ -62,6 +71,11 @@ export default function Edit({ user, billing_address, shipping_address }: EditPr
         shipping_postal_code: shipping_address?.postal_code || '',
         shipping_country: shipping_address?.country || '',
     });
+
+    const multiSelectRoles = all_roles.map((role) => ({
+        value: role.name,
+        label: role.name
+    }));
 
     const copyBillingToShipping = () => {
         setData({
@@ -116,6 +130,18 @@ export default function Edit({ user, billing_address, shipping_address }: EditPr
                                         {errors.email}
                                     </p>
                                 }
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between gap-4">
+                            <div>
+                                <Label className="mb-2">Roles</Label>
+                                <MultiSelect 
+                                    options={multiSelectRoles} 
+                                    placeholder="Select role..." 
+                                    selected={data.roles}
+                                    onChange={(values) => setData('roles', values)}
+                                />
                             </div>
                         </div>
 

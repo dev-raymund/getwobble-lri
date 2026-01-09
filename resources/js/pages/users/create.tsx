@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { MultiSelect } from "@/components/ui/multi-select";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Copy } from 'lucide-react';
 
@@ -31,18 +32,24 @@ type user = {
     shipping_country: string
 }
 
-interface userPageProps { 
-    user: user,
-    roles: string[]
+type role = {
+    id: number,
+    name: string
 }
 
-export default function Create({ roles }: userPageProps) {
+interface createUserPageProps { 
+    user: user,
+    all_roles: role[]
+}
+
+export default function Create({ all_roles }: createUserPageProps) {
 
     const addForm = useForm({
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
+        roles: [] as string[],
         billing_address_line_1: '',
         billing_address_line_2: '',
         billing_phone_number: '',
@@ -58,6 +65,11 @@ export default function Create({ roles }: userPageProps) {
         shipping_postal_code: '',
         shipping_country: '',
     });
+    
+    const multiSelectRoles = all_roles.map((role) => ({
+        value: role.name,
+        label: role.name
+    }));
 
     const copyBillingToShipping = () => {
         addForm.setData({
@@ -139,6 +151,18 @@ export default function Create({ roles }: userPageProps) {
                                     type="password" 
                                     value={addForm.data.password_confirmation} 
                                     onChange={e => addForm.setData('password_confirmation', e.target.value)} 
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="flex justify-between gap-4">
+                            <div>
+                                <Label className="mb-2">Roles</Label>
+                                <MultiSelect 
+                                    options={multiSelectRoles} 
+                                    placeholder="Select role..." 
+                                    selected={addForm.data.roles}
+                                    onChange={(values) => addForm.setData('roles', values)}
                                 />
                             </div>
                         </div>

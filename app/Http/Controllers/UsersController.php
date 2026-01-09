@@ -43,7 +43,7 @@ class UsersController extends Controller
     public function create(Request $request)
     {
         return Inertia::render('users/create', [
-            'roles' => Role::select('id', 'name')->get(),
+            'all_roles' => Role::select('id', 'name')->get(),
         ]);
     }
 
@@ -56,7 +56,7 @@ class UsersController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'confirmed', Password::defaults()],
-            'role' => 'nullable|string|exists:roles,name', 
+            'roles' => 'nullable|exists:roles,name', 
             'billing_address_line_1' => 'nullable|max:255',
             'billing_address_line_2' => 'nullable|max:255',
             'billing_phone_number' => 'nullable|max:255',
@@ -78,8 +78,12 @@ class UsersController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
-
-        $user->assignRole('customer');
+        
+        if (!empty($validated['roles'])) {
+            foreach ($validated['roles'] as $role) {
+                $user->assignRole($role);
+            }
+        }
 
         $this->create__update_billing_address($user, $validated);
         $this->create__update_shipping_address($user, $validated);
@@ -115,13 +119,16 @@ class UsersController extends Controller
      */
     public function edit(User $user)
     {
+
         $billing_address = DB::table('user_billing_address')->where('user_id', $user->id)->first();
         $shipping_address = DB::table('user_shipping_address')->where('user_id', $user->id)->first();
         
         return Inertia::render('users/edit', [
             'user' => $user,
+            'roles' => $user->roles->pluck('name')->map(fn($id) => (string)$id),
             'billing_address' => $billing_address,
-            'shipping_address' => $shipping_address
+            'shipping_address' => $shipping_address,
+            'all_roles' => Role::select('id', 'name')->get(),
         ]);
     }
 

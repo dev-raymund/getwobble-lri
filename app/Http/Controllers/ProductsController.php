@@ -54,8 +54,8 @@ class ProductsController extends Controller
     public function create(Request $request)
     {
         return Inertia::render('products/create', [
-            'categories' => Category::select('id', 'name')->get(),
-            'authors' => User::select('id', 'name')->get()
+            'all_categories' => Category::select('id', 'name')->get(),
+            'all_authors' => User::select('id', 'name')->get()
         ]);
     }
 
@@ -147,9 +147,17 @@ class ProductsController extends Controller
      */
     public function edit(Product $product)
     {
+        $categories = DB::table('product_has_categories')
+                ->where('product_id', $product->id)
+                ->join('categories', 'product_has_categories.category_id', '=', 'categories.id')
+                ->pluck('categories.name')
+                ->toArray();
+
         return Inertia::render('products/edit', [
             'product' => $product,
-            'authors' => User::select('id', 'name')->get()
+            'categories' => $categories,
+            'all_categories' => Category::select('id', 'name')->get(),
+            'all_authors' => User::select('id', 'name')->get()
         ]);
     }
 

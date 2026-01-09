@@ -27,12 +27,18 @@ type product = {
     author_id: number
 }
 
-interface EditProps {
-    product: product,
-    authors: { id: number; name: string }[]
+type author = {
+    id: number,
+    name: string
 }
 
-export default function Edit({ product, authors }: EditProps) {
+interface editProductPageProps {
+    product: product,
+    categories: string[],
+    all_authors: author[]
+}
+
+export default function Edit({ product, categories, all_authors }: editProductPageProps) {
 
     const { auth } = usePage<SharedData>().props;
 
@@ -46,6 +52,7 @@ export default function Edit({ product, authors }: EditProps) {
         tax_class: product.tax_class || '',
         description: product.description || '',
         author_id: product.author_id || '',
+        categories: categories
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -186,7 +193,7 @@ export default function Edit({ product, authors }: EditProps) {
                                     <SelectValue placeholder="Select Author" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {authors.map((author) => (
+                                    {all_authors.map((author) => (
                                         <SelectItem key={author.id} value={author.id.toString()}>
                                             {author.name} {author.id === auth.user.id && "(You)"}
                                         </SelectItem>
