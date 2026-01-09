@@ -10,6 +10,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 
 use Spatie\Permission\Traits\HasRoles;
 
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */

@@ -62,8 +62,10 @@ class DatabaseSeeder extends Seeder
         $admin = Role::firstOrCreate(['name' => 'admin']);
         $vendor = Role::firstOrCreate(['name' => 'vendor']);
         $customer = Role::firstOrCreate(['name' => 'customer']);
+        $subscriber = Role::firstOrCreate(['name' => 'subscriber']);
 
         // Assign permissions
+        $superAdmin->givePermissionTo(Permission::all());
         $admin->givePermissionTo(Permission::all());
 
         // // Assign role to user

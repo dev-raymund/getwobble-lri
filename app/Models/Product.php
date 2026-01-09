@@ -21,6 +21,7 @@ class Product extends Model
         'regular_price',
         'sale_price',
         'stock',
+        'sku',
         'tax_status',
         'tax_class',
         // 'image',
@@ -46,14 +47,6 @@ class Product extends Model
     public function author(): BelongsTo
     {
         return $this->BelongsTo(User::class, 'author_id');
-    }
-
-    /**
-     * The categories that belong to the product.
-     */
-    public function categories(): BelongsToMany
-    {
-        return $this->belongsToMany(Category::class, 'product_category', 'product_id', 'product_category_id');
     }
     
 }

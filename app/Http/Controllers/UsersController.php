@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Hash;
 
+use Illuminate\Support\Facades\DB;
+
 use App\Models\User;
 
 use Inertia\Inertia;
@@ -40,11 +42,35 @@ class UsersController extends Controller
      */
     public function create(Request $request)
     {
+        return Inertia::render('users/create', [
+            'roles' => Role::select('id', 'name')->get(),
+        ]);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'confirmed', Password::defaults()],
             'role' => 'nullable|string|exists:roles,name', 
+            'billing_address_line_1' => 'nullable|max:255',
+            'billing_address_line_2' => 'nullable|max:255',
+            'billing_phone_number' => 'nullable|max:255',
+            'billing_city' => 'nullable|max:255',
+            'billing_state' => 'nullable|max:255',
+            'billing_postal_code' => 'nullable|max:255',
+            'billing_country' => 'nullable|max:255',
+            'shipping_address_line_1' => 'nullable|max:255',
+            'shipping_address_line_2' => 'nullable|max:255',
+            'shipping_phone_number' => 'nullable|max:255',
+            'shipping_city' => 'nullable|max:255',
+            'shipping_state' => 'nullable|max:255',
+            'shipping_postal_code' => 'nullable|max:255',
+            'shipping_country' => 'nullable|max:255',
         ]);
 
         $user = User::create([
@@ -53,20 +79,12 @@ class UsersController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        if ($request->filled('role')) {
-            $user->assignRole($validated['role']);
-        }
+        $user->assignRole('customer');
 
-        return back()->with('success', 'User created successfully.');
+        $this->create__update_billing_address($user, $validated);
+        $this->create__update_shipping_address($user, $validated);
 
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+        return redirect()->route('users')->with('success', 'User created successfully!');
     }
 
     /**
@@ -95,9 +113,16 @@ class UsersController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(User $user)
     {
-        //
+        $billing_address = DB::table('user_billing_address')->where('user_id', $user->id)->first();
+        $shipping_address = DB::table('user_shipping_address')->where('user_id', $user->id)->first();
+        
+        return Inertia::render('users/edit', [
+            'user' => $user,
+            'billing_address' => $billing_address,
+            'shipping_address' => $shipping_address
+        ]);
     }
 
     /**
@@ -105,17 +130,34 @@ class UsersController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|max:255',
+            'billing_address_line_1' => 'nullable|max:255',
+            'billing_address_line_2' => 'nullable|max:255',
+            'billing_phone_number' => 'nullable|max:255',
+            'billing_city' => 'nullable|max:255',
+            'billing_state' => 'nullable|max:255',
+            'billing_postal_code' => 'nullable|max:255',
+            'billing_country' => 'nullable|max:255',
+            'shipping_address_line_1' => 'nullable|max:255',
+            'shipping_address_line_2' => 'nullable|max:255',
+            'shipping_phone_number' => 'nullable|max:255',
+            'shipping_city' => 'nullable|max:255',
+            'shipping_state' => 'nullable|max:255',
+            'shipping_postal_code' => 'nullable|max:255',
+            'shipping_country' => 'nullable|max:255',
         ]);
+
+        $this->create__update_billing_address($user, $validated);
+        $this->create__update_shipping_address($user, $validated);
 
         $user->update([
-            'name' => $request->name, 
-            'email' => $request->email
+            'name' => $validated['name'], 
+            'email' => $validated['email']
         ]);
 
-        return back()->with('success', 'User updated successfully');
+        return redirect()->route('users')->with('success', 'User updated successfully!');
     }
 
     /**
@@ -135,5 +177,47 @@ class UsersController extends Controller
         $user->removeRole($role);
     
         return back()->with('success', 'Role removed successfully');
+    }
+
+    /**
+     * Create or Update - billing address of a user
+     */
+    public function create__update_billing_address($user, $data)
+    {
+        $data = [
+            'user_id' => $user->id,
+            'address_line_1' => $data['billing_address_line_1'],
+            'address_line_2' => $data['billing_address_line_2'],
+            'phone_number' => $data['billing_phone_number'],
+            'city' => $data['billing_city'],
+            'state' => $data['billing_state'],
+            'postal_code' => $data['billing_postal_code'],
+            'country' => $data['billing_country']
+        ];
+
+        $billingAddressTable = DB::table('user_billing_address');
+        $checkUserHasBillingAddress = $billingAddressTable->where('user_id', $user->id)->exists();
+        return $checkUserHasBillingAddress ? $billingAddressTable->update($data) : $billingAddressTable->insert($data);
+    }
+
+    /**
+     * Create or Update - shipping address of a user
+     */
+    public function create__update_shipping_address($user, $data)
+    {
+        $data = [
+            'user_id' => $user->id,
+            'address_line_1' => $data['billing_address_line_1'],
+            'address_line_2' => $data['billing_address_line_2'],
+            'phone_number' => $data['billing_phone_number'],
+            'city' => $data['billing_city'],
+            'state' => $data['billing_state'],
+            'postal_code' => $data['billing_postal_code'],
+            'country' => $data['billing_country']
+        ];
+
+        $shippingAddressTable = DB::table('user_shipping_address');
+        $checkUserHasShippingAddress = $shippingAddressTable->where('user_id', $user->id)->exists();
+        return $checkUserHasShippingAddress ? $shippingAddressTable->update($data) : $shippingAddressTable->insert($data);
     }
 }

@@ -35,20 +35,23 @@ import { type SharedData } from '@/types';
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Products', href: '/products' }];
 
 type product = { 
-    id: number; 
-    name: string; 
-    price: number; 
-    stock: number; 
-    description: string;
-    categories: string[]; 
-    author_id: number;
-};
+    id: number,
+    name: string,
+    price: number,
+    stock: number,
+    sku: string,
+    tax_status: string,
+    tax_class: string,
+    description: string,
+    categories: string[], 
+    author_id: number
+}
 
 interface productsPageProps { 
-    products: product[]; 
-    authors: { id: number; name: string }[];
-    all_categories: string[];
-};
+    products: product[],
+    authors: { id: number; name: string }[],
+    all_categories: string[]
+}
 
 export default function Index({ products, authors, all_categories }: productsPageProps) {
 
@@ -60,12 +63,10 @@ export default function Index({ products, authors, all_categories }: productsPag
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState('');
 
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isDeleteProductOpen, setIsDeleteProductOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<product | null>(null);
 
-    const addForm = useForm({ 
+    const duplicateData = useForm({ 
         name: '', 
         regular_price: '', 
         sale_price: '',
@@ -77,66 +78,16 @@ export default function Index({ products, authors, all_categories }: productsPag
         author_id: '',
     });
 
-    const editForm = useForm({ 
-        id: 0, 
-        name: '', 
-        regular_price: '', 
-        sale_price: '',
-        stock: '',
-        sku: '',
-        tax_status: '',
-        tax_class: '',
-        description: '',
-        author_id: '',
-    });
-
-    const handleAddProduct = (e: React.FormEvent) => {
-        e.preventDefault();
-        addForm.post(
-            route('products.store'), {
-                onSuccess: () => { 
-                    setIsAddDialogOpen(false); 
-                    addForm.reset(); 
-                }
-            }
-        );
+    const handleCreateClick = () => {
+        router.get(route('products.create', {}));
     };
-
-    useEffect(() => {
-        if (isAddDialogOpen && auth.user) {
-            addForm.setData('author_id', auth.user.id.toString());
-        }
-    }, [isAddDialogOpen]);
 
     const handleEditClick = (product: product) => {
-        editForm.setData({ 
-            id: product.id, 
-            name: product.name, 
-            regular_price: (product as any).regular_price,
-            sale_price: (product as any).sale_price,
-            stock: (product as any).stock,
-            sku: (product as any).sku,
-            tax_status: (product as any).tax_status,
-            tax_class: (product as any).tax_class,
-            description: (product as any).description,
-            author_id: (product as any).author_id?.toString() || "", 
-        });
-        setIsEditDialogOpen(true);
-    };
-
-    const handleUpdateProduct = (e: React.FormEvent) => {
-        e.preventDefault();
-        editForm.put(
-            route('products.update', { 
-                product: editForm.data.id 
-            }), {
-                onSuccess: () => setIsEditDialogOpen(false)
-            }
-        );
+        router.get(route('products.edit', { product: product.id }));
     };
 
     const handleDuplicateProduct = (product: product) => {
-        addForm.setData({
+        duplicateData.setData({
             name: `${product.name} (Copy)`,
             regular_price: (product as any).regular_price?.toString() || '',
             sale_price: (product as any).sale_price?.toString() || '',
@@ -368,7 +319,7 @@ export default function Index({ products, authors, all_categories }: productsPag
 
                     {userPermissions.includes('create products') && (
                         <Button 
-                            onClick={() => setIsAddDialogOpen(true)} 
+                            onClick={() => handleCreateClick()} 
                             className="bg-blue-600 hover:bg-blue-700"
                         >
                             <Plus className="h-4 w-4" /> Add Product
@@ -377,7 +328,7 @@ export default function Index({ products, authors, all_categories }: productsPag
 
                 </div>
 
-                <div className="rounded-md border bg-white">
+                <div className="rounded-md border">
                     <Table>
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
@@ -434,354 +385,32 @@ export default function Index({ products, authors, all_categories }: productsPag
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="flex items-center justify-end space-x-2 py-4">
-                    <div className="flex-1 text-sm text-muted-foreground">
-                        Page {table.getState().pagination.pageIndex + 1} of{" "}
-                        {table.getPageCount()}
-                    </div>
-                    <div className="space-x-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </div>
-
-                {/* MODAL: ADD PRODUCT */}
-                <AlertDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <AlertDialogContent className="min-w-4/5">
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Add New Product</AlertDialogTitle>
-                        </AlertDialogHeader>
-
-                        <form id="add-form" onSubmit={handleAddProduct} className="space-y-4 py-2">
-                            <div>
-                                <Label className="mb-2">Name</Label>
-                                <Input 
-                                    value={addForm.data.name} 
-                                    onChange={e => addForm.setData('name', e.target.value)} 
-                                />
-                                {addForm.errors.name && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {addForm.errors.name}
-                                    </p>
-                                }
-                            </div>
-
-                            <div className="flex justify-between gap-4">
-                                <div className="w-1/3">
-                                    <Label className="mb-2">Regular Price</Label>
-                                    <Input 
-                                        type="number"
-                                        value={addForm.data.regular_price} 
-                                        onChange={e => addForm.setData('regular_price', e.target.value)} 
-                                    />
-                                    {addForm.errors.regular_price && 
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {addForm.errors.regular_price}
-                                        </p>
-                                    }
-                                </div>
-
-                                <div className="w-1/3">
-                                    <Label className="mb-2">Sale Price</Label>
-                                    <Input 
-                                        type="number"
-                                        value={addForm.data.sale_price} 
-                                        onChange={e => addForm.setData('sale_price', e.target.value)} 
-                                    />
-                                    {addForm.errors.sale_price && 
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {addForm.errors.sale_price}
-                                        </p>
-                                    }
-                                </div>
-                            
-                                <div className="w-1/3">
-                                    <Label className="mb-2">Stock</Label>
-                                    <Input 
-                                        type="number"
-                                        value={addForm.data.stock} 
-                                        onChange={e => addForm.setData('stock', e.target.value)} 
-                                    />
-                                    {addForm.errors.stock && 
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {addForm.errors.stock}
-                                        </p>
-                                    }
-                                </div>
-                            </div>
-
-                            <div className="flex justify-between gap-4">
-                                <div className="w-1/3">
-                                    <Label className="mb-2">SKU</Label>
-                                    <Input 
-                                        type="number"
-                                        value={addForm.data.sku} 
-                                        onChange={e => addForm.setData('sku', e.target.value)} 
-                                    />
-                                    {addForm.errors.sku && 
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {addForm.errors.sku}
-                                        </p>
-                                    }
-                                </div>
-
-                                <div className="w-1/3">
-                                    <Label className="mb-2">Tax Status</Label>
-                                    <Input 
-                                        type="number"
-                                        value={addForm.data.tax_status} 
-                                        onChange={e => addForm.setData('tax_status', e.target.value)} 
-                                    />
-                                    {addForm.errors.tax_status && 
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {addForm.errors.tax_status}
-                                        </p>
-                                    }
-                                </div>
-
-                                <div className="w-1/3">
-                                    <Label className="mb-2">Tax Class</Label>
-                                    <Input 
-                                        type="number"
-                                        value={addForm.data.tax_class} 
-                                        onChange={e => addForm.setData('tax_class', e.target.value)} 
-                                    />
-                                    {addForm.errors.tax_class && 
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {addForm.errors.tax_class}
-                                        </p>
-                                    }
-                                </div>
-                            </div>
-
-                            <div>
-                                <Label className="mb-2">Description</Label>
-                                <Textarea 
-                                    value={addForm.data.description} 
-                                    onChange={e => addForm.setData('description', e.target.value)} 
-                                />
-                                {addForm.errors.description && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {addForm.errors.description}
-                                    </p>
-                                }
-                            </div>
-
-                            <div>
-                                <Label className="mb-2">Author</Label>
-                                <Select 
-                                    value={addForm.data.author_id} 
-                                    onValueChange={(val) => addForm.setData('author_id', val)}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Author" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {authors.map((author) => (
-                                            <SelectItem key={author.id} value={author.id.toString()}>
-                                                {author.name} {author.id === auth.user.id && "(You)"}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {addForm.errors.author_id && 
-                                    <p className="text-red-500 text-xs">
-                                    {addForm.errors.author_id}
-                                    </p>
-                                }
-                            </div>
-                            
-                        </form>
-
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <Button 
-                                type="submit" 
-                                form="add-form" 
-                                disabled={addForm.processing} 
-                                className="bg-blue-600"
+                {products.length > 0 && (
+                    <div className="flex items-center justify-end space-x-2 py-4">
+                        <div className="flex-1 text-sm text-muted-foreground">
+                            Page {table.getState().pagination.pageIndex + 1} of{" "}
+                            {table.getPageCount()}
+                        </div>
+                        <div className="space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => table.previousPage()}
+                                disabled={!table.getCanPreviousPage()}
                             >
-                                {addForm.processing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                                Add Product
+                                Previous
                             </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-
-                {/* MODAL: EDIT PRODUCT */}
-                <AlertDialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                    <AlertDialogContent className="min-w-4/5">
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Edit Product Details</AlertDialogTitle>
-                        </AlertDialogHeader>
-                        <form id="edit-form" onSubmit={handleUpdateProduct} className="space-y-4 py-2">
-                            <div>
-                                <Label className="mb-2">Name</Label>
-                                <Input 
-                                    value={editForm.data.name} 
-                                    onChange={e => editForm.setData('name', e.target.value)} 
-                                />
-                                {editForm.errors.name && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {editForm.errors.name}
-                                    </p>
-                                }
-                            </div>
-
-                            <div className="flex justify-between gap-4">
-                                <div className="w-1/3">
-                                    <Label className="mb-2">Regular Price</Label>
-                                    <Input 
-                                        type="number"
-                                        value={editForm.data.regular_price} 
-                                        onChange={e => editForm.setData('regular_price', e.target.value)} 
-                                    />
-                                    {editForm.errors.regular_price && 
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {editForm.errors.regular_price}
-                                        </p>
-                                    }
-                                </div>
-
-                                <div className="w-1/3">
-                                    <Label className="mb-2">Sale Price</Label>
-                                    <Input 
-                                        type="number"
-                                        value={editForm.data.sale_price} 
-                                        onChange={e => editForm.setData('sale_price', e.target.value)} 
-                                    />
-                                    {editForm.errors.sale_price && 
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {editForm.errors.sale_price}
-                                        </p>
-                                    }
-                                </div>
-
-                                <div className="w-1/3">
-                                    <Label className="mb-2">Stock</Label>
-                                    <Input 
-                                        type="number"
-                                        value={editForm.data.stock} 
-                                        onChange={e => editForm.setData('stock', e.target.value)} 
-                                    />
-                                    {editForm.errors.stock && 
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {editForm.errors.stock}
-                                        </p>
-                                    }
-                                </div>
-                            </div>
-
-                            <div className="flex justify-between gap-4">
-                                <div className="w-1/3">
-                                    <Label className="mb-2">SKU</Label>
-                                    <Input 
-                                        type="number"
-                                        value={editForm.data.sku} 
-                                        onChange={e => editForm.setData('sku', e.target.value)} 
-                                    />
-                                    {editForm.errors.sku && 
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {editForm.errors.sku}
-                                        </p>
-                                    }
-                                </div>
-
-                                <div className="w-1/3">
-                                    <Label className="mb-2">Tax Status</Label>
-                                    <Input 
-                                        type="number"
-                                        value={editForm.data.tax_status} 
-                                        onChange={e => editForm.setData('tax_status', e.target.value)} 
-                                    />
-                                    {editForm.errors.tax_status && 
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {editForm.errors.tax_status}
-                                        </p>
-                                    }
-                                </div>
-
-                                <div className="w-1/3">
-                                    <Label className="mb-2">Tax Class</Label>
-                                    <Input 
-                                        type="number"
-                                        value={editForm.data.tax_class} 
-                                        onChange={e => editForm.setData('tax_class', e.target.value)} 
-                                    />
-                                    {editForm.errors.tax_class && 
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {editForm.errors.tax_class}
-                                        </p>
-                                    }
-                                </div>
-
-                            </div>
-
-                            <div>
-                                <Label className="mb-2">Description</Label>
-                                <Textarea 
-                                    value={editForm.data.description} 
-                                    onChange={e => editForm.setData('description', e.target.value)} 
-                                />
-                                {editForm.errors.description && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {editForm.errors.description}
-                                    </p>
-                                }
-                            </div>
-
-                            <div>
-                                <Label className="mb-2">Author</Label>
-                                <Select 
-                                    value={editForm.data.author_id} 
-                                    onValueChange={(val) => editForm.setData('author_id', val)}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Author" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {authors.map((author) => (
-                                            <SelectItem key={author.id} value={author.id.toString()}>
-                                                {author.name} {author.id === auth.user.id && "(You)"}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {editForm.errors.author_id && 
-                                    <p className="text-red-500 text-xs">
-                                    {editForm.errors.author_id}
-                                    </p>
-                                }
-                            </div>
-                            
-                        </form>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <Button 
-                                type="submit" 
-                                form="edit-form" 
-                                disabled={editForm.processing} 
-                                className="bg-blue-600"
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => table.nextPage()}
+                                disabled={!table.getCanNextPage()}
                             >
-                                {editForm.processing ? "Saving..." : "Save Changes"}
+                                Next
                             </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                        </div>
+                    </div>
+                )}
 
                 {/* MODAL: DELETE PRODUCT */}
                 <AlertDialog open={isDeleteProductOpen} onOpenChange={setIsDeleteProductOpen}>

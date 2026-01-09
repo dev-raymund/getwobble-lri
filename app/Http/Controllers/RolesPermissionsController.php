@@ -38,6 +38,14 @@ class RolesPermissionsController extends Controller
      */
     public function create(Request $request)
     {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request, Role $role)
+    {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
         ]);
@@ -48,14 +56,6 @@ class RolesPermissionsController extends Controller
         ]);
 
         return back()->with('success', 'Role created successfully.');
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request, Role $role)
-    {
-        //
     }
 
     /**

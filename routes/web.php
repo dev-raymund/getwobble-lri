@@ -40,13 +40,21 @@ Route::get('/users', [UsersController::class, 'index'])
     ->middleware(['auth', 'permission:view users'])
     ->name('users');
 
-Route::post('/users', [UsersController::class, 'create'])
+Route::post('/users', [UsersController::class, 'store'])
     ->middleware(['auth', 'permission:create users'])
     ->name('users.store');
 
 Route::post('/users/{user}/roles', [UsersController::class, 'assignRole'])
     ->middleware(['auth', 'permission:edit users'])
     ->name('users.roles.store');
+
+Route::get('/users/create', [UsersController::class, 'create'])
+    ->middleware(['auth', 'permission:create users'])
+    ->name('users.create');
+
+Route::get('/users/{user}', [UsersController::class, 'edit'])
+    ->middleware(['auth', 'permission:edit users'])
+    ->name('users.edit');
 
 Route::put('/users/{user}', [UsersController::class, 'update'])
     ->middleware(['auth', 'permission:edit users'])
@@ -66,7 +74,15 @@ Route::get('/products', [ProductsController::class, 'index'])
     ->middleware(['auth', 'permission:view products'])
     ->name('products');
 
-Route::post('/products', [ProductsController::class, 'create'])
+Route::get('/products/create', [ProductsController::class, 'create'])
+    ->middleware(['auth', 'permission:create products'])
+    ->name('products.create');
+
+Route::get('/products/{product}', [ProductsController::class, 'edit'])
+    ->middleware(['auth', 'permission:edit products'])
+    ->name('products.edit');
+
+Route::post('/products', [ProductsController::class, 'store'])
     ->middleware(['auth', 'permission:create products'])
     ->name('products.store');
 
@@ -92,7 +108,7 @@ Route::get('/categories', [CategoriesController::class, 'index'])
     ->middleware(['auth', 'permission:view categories'])
     ->name('categories');
 
-Route::post('/categories', [CategoriesController::class, 'create'])
+Route::post('/categories', [CategoriesController::class, 'store'])
     ->middleware(['auth', 'permission:create categories'])
     ->name('categories.store');
 
@@ -110,7 +126,7 @@ Route::get('/roles-permissions', [RolesPermissionsController::class, 'index'])
     ->middleware(['auth', 'permission:view role/permissions'])
     ->name('roles_permissions');
 
-Route::post('/roles-permissions', [RolesPermissionsController::class, 'create'])
+Route::post('/roles-permissions', [RolesPermissionsController::class, 'store'])
     ->middleware(['auth', 'permission:create role/permissions'])
     ->name('roles.store');
 

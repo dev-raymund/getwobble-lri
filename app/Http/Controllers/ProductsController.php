@@ -53,11 +53,23 @@ class ProductsController extends Controller
      */
     public function create(Request $request)
     {
+        return Inertia::render('products/create', [
+            'categories' => Category::select('id', 'name')->get(),
+            'authors' => User::select('id', 'name')->get()
+        ]);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:products,name',
             'regular_price' => 'required|numeric|min:0',
             'sale_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
+            'sku' => 'nullable|string',
             'tax_status' => 'required|string',
             'tax_class' => 'nullable|string',
             'description' => 'nullable|string',
@@ -70,6 +82,7 @@ class ProductsController extends Controller
             'regular_price' => $validated['regular_price'],
             'sale_price' => $validated['sale_price'],
             'stock' => $validated['stock'],
+            'sku' => $validated['sku'],
             'tax_status' => $validated['tax_status'],
             'tax_class' => $validated['tax_class'],
             'description' => $validated['description'],
@@ -96,15 +109,7 @@ class ProductsController extends Controller
             }
         }
 
-        return back()->with('success', 'Product created successfully!');
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+        return redirect()->route('products')->with('success', 'Product created successfully!');
     }
 
     /**
@@ -140,9 +145,12 @@ class ProductsController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Product $product)
     {
-        //
+        return Inertia::render('products/edit', [
+            'product' => $product,
+            'authors' => User::select('id', 'name')->get()
+        ]);
     }
 
     /**
@@ -160,6 +168,7 @@ class ProductsController extends Controller
             'regular_price' => 'required|numeric|min:0',
             'sale_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
+            'sku' => 'nullable|string',
             'tax_status' => 'required|string',
             'tax_class' => 'nullable|string',
             'description' => 'nullable|string',
@@ -172,13 +181,14 @@ class ProductsController extends Controller
             'regular_price' => $validated['regular_price'],
             'sale_price' => $validated['sale_price'],
             'stock' => $validated['stock'],
+            'sku' => $validated['sku'],
             'tax_status' => $validated['tax_status'],
             'tax_class' => $validated['tax_class'],
             'description' => $validated['description'],
             'author_id' => $validated['author_id'],
         ]);
 
-        return back()->with('success', 'Product updated successfully!');
+        return redirect()->route('products')->with('success', 'Product updated successfully!');
     }
 
     /**

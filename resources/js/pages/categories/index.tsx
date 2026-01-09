@@ -35,14 +35,14 @@ import { type SharedData } from '@/types';
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Categories', href: '/categories' }];
 
 type category = { 
-    id: number; 
-    name: string; 
-    description: string;
-};
+    id: number,
+    name: string,
+    description: string
+}
 
 interface categoriesPageProps { 
-    categories: category[];
-};
+    categories: category[]
+}
 
 export default function Index({ categories }: categoriesPageProps) {
 
@@ -240,7 +240,7 @@ export default function Index({ categories }: categoriesPageProps) {
 
                 </div>
 
-                <div className="rounded-md border bg-white">
+                <div className="rounded-md border">
                     <Table>
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
@@ -297,30 +297,32 @@ export default function Index({ categories }: categoriesPageProps) {
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="flex items-center justify-end space-x-2 py-4">
-                    <div className="flex-1 text-sm text-muted-foreground">
-                        Page {table.getState().pagination.pageIndex + 1} of{" "}
-                        {table.getPageCount()}
+                {categories.length > 0 && (
+                    <div className="flex items-center justify-end space-x-2 py-4">
+                        <div className="flex-1 text-sm text-muted-foreground">
+                            Page {table.getState().pagination.pageIndex + 1} of{" "}
+                            {table.getPageCount()}
+                        </div>
+                        <div className="space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => table.previousPage()}
+                                disabled={!table.getCanPreviousPage()}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => table.nextPage()}
+                                disabled={!table.getCanNextPage()}
+                            >
+                                Next
+                            </Button>
+                        </div>
                     </div>
-                    <div className="space-x-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </div>
+                )}
 
                 {/* MODAL: ADD CATEGORY */}
                 <AlertDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

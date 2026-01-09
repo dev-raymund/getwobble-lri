@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Plus, Trash2, X, Loader2 } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Plus, Trash2, X, Loader2, Copy } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -34,16 +34,16 @@ import { type SharedData } from '@/types';
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
 
 type user = { 
-    id: number; 
-    name: string; 
-    email: string; 
-    roles: string[];
-};
+    id: number,
+    name: string,
+    email: string,
+    roles: string[]
+}
 
 interface usersPageProps { 
-    users: user[]; 
-    all_roles: string[];
-};
+    users: user[],
+    all_roles: string[]
+}
 
 export default function Index({ users, all_roles }: usersPageProps) {
 
@@ -55,57 +55,18 @@ export default function Index({ users, all_roles }: usersPageProps) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState('');
 
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isDeleteUserOpen, setIsDeleteUserOpen] = useState(false);
     const [isDeleteRoleOpen, setIsDeleteRoleOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<user | null>(null);
     const [selectedRole, setSelectedRole] = useState<{ userId: number; role: string } | null>(null);
     const [isAddingRoleToId, setIsAddingRoleToId] = useState<number | null>(null);
 
-    const addForm = useForm({ 
-        name: '', 
-        email: '', 
-        password: '', 
-        password_confirmation: '', 
-        role: '' 
-    });
-    const editForm = useForm({ 
-        id: 0, 
-        name: '', 
-        email: '' 
-    });
-
-    const handleAddUser = (e: React.FormEvent) => {
-        e.preventDefault();
-        addForm.post(
-            route('users.store'), {
-                onSuccess: () => { 
-                    setIsAddDialogOpen(false); 
-                    addForm.reset(); 
-                }
-            }
-        );
+    const handleCreateClick = () => {
+        router.get(route('users.create', {}));
     };
 
     const handleEditClick = (user: user) => {
-        editForm.setData({ 
-            id: user.id, 
-            name: user.name, 
-            email: user.email 
-        });
-        setIsEditDialogOpen(true);
-    };
-
-    const handleUpdateUser = (e: React.FormEvent) => {
-        e.preventDefault();
-        editForm.put(
-            route('users.update', { 
-                user: editForm.data.id 
-            }), {
-                onSuccess: () => setIsEditDialogOpen(false)
-            }
-        );
+        router.get(route('users.edit', { user: user.id }));
     };
 
     const confirmDeleteUser = () => {
@@ -283,16 +244,16 @@ export default function Index({ users, all_roles }: usersPageProps) {
 
                     {userPermissions.includes('create users') && (
                         <Button 
-                            onClick={() => setIsAddDialogOpen(true)} 
+                            onClick={() => handleCreateClick()} 
                             className="bg-blue-600 hover:bg-blue-700"
                         >
-                            <Plus className="h-4 w-4" /> Add User
+                            <Plus className="h-4 w-4" /> Create User
                         </Button>
                     )}
 
                 </div>
 
-                <div className="rounded-md border bg-white">
+                <div className="rounded-md border">
                     <Table>
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
@@ -349,149 +310,32 @@ export default function Index({ users, all_roles }: usersPageProps) {
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="flex items-center justify-end space-x-2 py-4">
-                    <div className="flex-1 text-sm text-muted-foreground">
-                        Page {table.getState().pagination.pageIndex + 1} of{" "}
-                        {table.getPageCount()}
-                    </div>
-                    <div className="space-x-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </div>
-
-                {/* MODAL: ADD USER */}
-                <AlertDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Add New User</AlertDialogTitle>
-                        </AlertDialogHeader>
-
-                        <form id="add-form" onSubmit={handleAddUser} className="space-y-4 py-2">
-                            <div>
-                                <Label className="mb-2">Name</Label>
-                                <Input 
-                                    value={addForm.data.name} 
-                                    onChange={e => addForm.setData('name', e.target.value)} 
-                                />
-                                {addForm.errors.name && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {addForm.errors.name}
-                                    </p>
-                                }
-                            </div>
-                            <div>
-                                <Label className="mb-2">Email</Label>
-                                <Input 
-                                    type="email" 
-                                    value={addForm.data.email} 
-                                    onChange={e => addForm.setData('email', e.target.value)} 
-                                />
-                                {addForm.errors.email && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {addForm.errors.email}
-                                    </p>
-                                }
-                            </div>
-
-                            <div>
-                                <Label className="mb-2">Password</Label>
-                                <Input 
-                                    type="password" 
-                                    value={addForm.data.password} 
-                                    onChange={e => addForm.setData('password', e.target.value)} 
-                                />
-                                {addForm.errors.password && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {addForm.errors.password}
-                                    </p>
-                                }
-                            </div>
-                            <div>
-                                <Label className="mb-2">Confirm Password</Label>
-                                <Input 
-                                    type="password" 
-                                    value={addForm.data.password_confirmation} 
-                                    onChange={e => addForm.setData('password_confirmation', e.target.value)} 
-                                />
-                            </div>
-                        </form>
-
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <Button 
-                                type="submit" 
-                                form="add-form" 
-                                disabled={addForm.processing} 
-                                className="bg-blue-600"
+                {users.length > 0 && (
+                    <div className="flex items-center justify-end space-x-2 py-4">
+                        <div className="flex-1 text-sm text-muted-foreground">
+                            Page {table.getState().pagination.pageIndex + 1} of{" "}
+                            {table.getPageCount()}
+                        </div>
+                        <div className="space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => table.previousPage()}
+                                disabled={!table.getCanPreviousPage()}
                             >
-                                {addForm.processing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                                Add User
+                                Previous
                             </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-
-                {/* MODAL: EDIT USER */}
-                <AlertDialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Edit User Details</AlertDialogTitle>
-                        </AlertDialogHeader>
-                        <form id="edit-form" onSubmit={handleUpdateUser} className="space-y-4 py-2">
-                            <div>
-                                <Label className="mb-2">Name</Label>
-                                <Input 
-                                    value={editForm.data.name} 
-                                    onChange={e => editForm.setData('name', e.target.value)} 
-                                />
-                                {editForm.errors.name && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {editForm.errors.name}
-                                    </p>
-                                }
-                            </div>
-                            <div>
-                                <Label className="mb-2">Email</Label>
-                                <Input 
-                                    type="email" 
-                                    value={editForm.data.email} 
-                                    onChange={e => editForm.setData('email', e.target.value)} 
-                                />
-                                {editForm.errors.email && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {editForm.errors.email}
-                                    </p>
-                                }
-                            </div>
-                        </form>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <Button 
-                                type="submit" 
-                                form="edit-form" 
-                                disabled={editForm.processing} 
-                                className="bg-blue-600"
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => table.nextPage()}
+                                disabled={!table.getCanNextPage()}
                             >
-                                {editForm.processing ? "Saving..." : "Save Changes"}
+                                Next
                             </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                        </div>
+                    </div>
+                )}
 
                 {/* MODAL: DELETE USER */}
                 <AlertDialog open={isDeleteUserOpen} onOpenChange={setIsDeleteUserOpen}>
@@ -534,3 +378,4 @@ export default function Index({ users, all_roles }: usersPageProps) {
         </AppLayout>
     );
 }
+

@@ -44,19 +44,20 @@ import {
 } from '@tanstack/react-table';
 
 import { type SharedData } from '@/types';
+import roles from '@/routes/roles';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Roles - Permissions', href: '/roles-permissions' }];
 
 type rolePermission = {
-    id: number;
-    name: string;
-    permissions: string[];
-};
+    id: number,
+    name: string,
+    permissions: string[]
+}
 
 interface rolesPermissionsPageProps {
-    roles_permissions: rolePermission[];
-    all_permissions: string[];
-};
+    roles_permissions: rolePermission[],
+    all_permissions: string[]
+}
 
 export default function Index({ roles_permissions, all_permissions }: rolesPermissionsPageProps) {
 
@@ -330,14 +331,14 @@ export default function Index({ roles_permissions, all_permissions }: rolesPermi
                         className="max-w-sm"
                     />
 
-                    {userPermissions.includes('create role/permissions') && (
+                    {/* {userPermissions.includes('create role/permissions') && (
                         <Button 
                             onClick={() => setIsAddDialogOpen(true)} 
                             className="bg-blue-600 hover:bg-blue-700"
                         >
                             <Plus className="h-4 w-4" /> Add Role
                         </Button>
-                    )}
+                    )} */}
                 </div>
 
                 <div className="rounded-md border">
@@ -376,30 +377,32 @@ export default function Index({ roles_permissions, all_permissions }: rolesPermi
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="flex items-center justify-end space-x-2 py-4">
-                    <div className="flex-1 text-sm text-muted-foreground">
-                        Page {table.getState().pagination.pageIndex + 1} of{" "}
-                        {table.getPageCount()}
+                {roles_permissions.length > 0 && (
+                    <div className="flex items-center justify-end space-x-2 py-4">
+                        <div className="flex-1 text-sm text-muted-foreground">
+                            Page {table.getState().pagination.pageIndex + 1} of{" "}
+                            {table.getPageCount()}
+                        </div>
+                        <div className="space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => table.previousPage()}
+                                disabled={!table.getCanPreviousPage()}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => table.nextPage()}
+                                disabled={!table.getCanNextPage()}
+                            >
+                                Next
+                            </Button>
+                        </div>
                     </div>
-                    <div className="space-x-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </div>
+                )}
 
                 {/* MODAL: ADD ROLE */}
                 <AlertDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
