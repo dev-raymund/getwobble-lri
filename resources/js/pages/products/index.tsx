@@ -36,6 +36,7 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Products', href: '/products' }]
 
 type product = { 
     id: number,
+    image: string,
     name: string,
     price: number,
     stock: number,
@@ -151,23 +152,43 @@ export default function Index({ products, authors, all_categories }: productsPag
     let columns: ColumnDef<product>[] = [
         { accessorKey: 'id', header: 'ID' },
         {
+            accessorKey: 'image',
+            header: 'Image',
+            cell: ({ row, getValue }) => {
+
+                const image_path = getValue<string>();
+
+                return (
+                    <div>
+                        <img 
+                            src={`/storage/${
+                                image_path ? image_path : '/products/placeholder.png'
+                            }`} 
+                            width={50} 
+                            className="rounded-sm" 
+                        />
+                    </div>
+                )
+            }
+        },
+        {
             accessorKey: 'name',
-            header: 'Product Name',
+            header: 'Name',
             cell: ({ getValue }) => <span className="font-medium capitalize">{getValue<string>()}</span>,
         },
         {
-            accessorKey: 'regular_price',
-            header: 'Regular Price',
-            cell: ({ getValue }) => <span className="font-medium">{getValue<number>()}</span>,
-        },
-        {
-            accessorKey: 'sale_price',
-            header: 'Sale Price',
-            cell: ({ getValue }) => <span className="font-medium">{getValue<number>()}</span>,
+            accessorKey: 'sku',
+            header: 'SKU',
+            cell: ({ getValue }) => <span className="font-medium">{getValue<string>()}</span>,
         },
         {
             accessorKey: 'stock',
             header: 'Stock',
+            cell: ({ getValue }) => <span className="font-medium">{getValue<number>()}</span>,
+        },
+        {
+            accessorKey: 'regular_price',
+            header: 'Price',
             cell: ({ getValue }) => <span className="font-medium">{getValue<number>()}</span>,
         },
         {

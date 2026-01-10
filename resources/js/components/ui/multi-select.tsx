@@ -52,7 +52,7 @@ export function MultiSelect({ options, selected, onChange, placeholder }: MultiS
 
     return (
         <Command onKeyDown={handleKeyDown} className="overflow-visible bg-transparent">
-            <div className="group border border-input px-3 py-2 text-sm ring-offset-background rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-white">
+            <div className="group border border-input px-3 py-2 text-sm ring-offset-background rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ">
                 <div className="flex gap-1 flex-wrap">
                     {selectedObjects.map((option) => (
                         <Badge key={option.value} variant="secondary" className="hover:bg-secondary">

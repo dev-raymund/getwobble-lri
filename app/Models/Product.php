@@ -24,7 +24,7 @@ class Product extends Model
         'sku',
         'tax_status',
         'tax_class',
-        // 'image',
+        'image',
         'is_active',
         'author_id',
     ];

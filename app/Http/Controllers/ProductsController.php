@@ -10,9 +10,9 @@ use App\Models\User;
 use Inertia\Inertia;
 
 use Illuminate\Support\Facades\DB;
-
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 
 class ProductsController extends Controller
 {
@@ -25,10 +25,12 @@ class ProductsController extends Controller
         $products = Product::with('author')->get()->map(function ($product) {
             return [
                 'id' => $product->id,
+                'image' => $product->image,
                 'name' => $product->name,
                 'regular_price' => $product->regular_price,
                 'sale_price' => $product->sale_price,
                 'stock' => $product->stock,
+                'sku' => $product->sku,
                 'tax_status' => $product->tax_status,
                 'tax_class' => $product->tax_class,
                 'description' => $product->description,
@@ -65,18 +67,20 @@ class ProductsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'name' => 'required|string|max:255|unique:products,name',
             'regular_price' => 'required|numeric|min:0',
             'sale_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'sku' => 'nullable|string',
-            'tax_status' => 'required|string',
+            'sku' => 'nullable|string|unique:products,sku',
+            'tax_status' => 'nullable|string',
             'tax_class' => 'nullable|string',
             'description' => 'nullable|string',
             'author_id' => 'required|exists:users,id',
         ]);
 
         $product = Product::create([
+            'image' => $validated['image'],
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'regular_price' => $validated['regular_price'],
@@ -88,6 +92,14 @@ class ProductsController extends Controller
             'description' => $validated['description'],
             'author_id' => $validated['author_id'],
         ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('products', 'public');
+            
+            $product->update([
+                'image' => $path
+            ]);
+        }
 
         if ($request->has('categories')) {
 
@@ -167,6 +179,7 @@ class ProductsController extends Controller
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'name' => [
                 'required', 
                 'string', 
@@ -176,14 +189,14 @@ class ProductsController extends Controller
             'regular_price' => 'required|numeric|min:0',
             'sale_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'sku' => 'nullable|string',
-            'tax_status' => 'required|string',
+            'sku' => 'nullable|string|unique:products,sku,' . $product->id,
+            'tax_status' => 'nullable|string',
             'tax_class' => 'nullable|string',
             'description' => 'nullable|string',
             'author_id' => 'required|exists:users,id',
         ]);
 
-        $product->update([
+        $updateData = [
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'regular_price' => $validated['regular_price'],
@@ -194,7 +207,35 @@ class ProductsController extends Controller
             'tax_class' => $validated['tax_class'],
             'description' => $validated['description'],
             'author_id' => $validated['author_id'],
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+
+            $updateData['image'] = $request->file('image')->store('products', 'public');
+        } 
+        elseif ($request->input('image') === null && $product->image) {
+            Storage::disk('public')->delete($product->image);
+            $updateData['image'] = null;
+        }
+
+        $product->update($updateData);
+
+        if ($request->has('categories')) {
+            DB::table('product_has_categories')->where('product_id', $product->id)->delete();
+
+            foreach ($request->categories as $catName) {
+                $category = Category::where('name', $catName)->first();
+                if ($category) {
+                    DB::table('product_has_categories')->insert([
+                        'product_id' => $product->id,
+                        'category_id' => $category->id,
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('products')->with('success', 'Product updated successfully!');
     }

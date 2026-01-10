@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('sale_price', 10, 2);
             $table->integer('stock')->default(0);
             $table->string('sku')->unique()->nullable();
-            $table->string('tax_status')->default('taxable');
+            $table->string('tax_status')->default('none');
             $table->string('tax_class')->default('standard');
             $table->string('image')->nullable();
             $table->unsignedBigInteger('author_id');

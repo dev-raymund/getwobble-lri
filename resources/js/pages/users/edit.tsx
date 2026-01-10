@@ -100,264 +100,268 @@ export default function Edit({ user, roles, billing_address, shipping_address, a
             <Head title="Edit User" />
             <div className="flex flex-1 flex-col gap-4 p-4">
 
-                <div className="rounded-md border bg-white p-5">
+                <div className="">
                     <form onSubmit={handleSubmit} className="space-y-4">
 
-                        <div className="flex justify-between gap-4">
-                            <div className="w-1/2">
-                                <Label htmlFor="name" className="mb-2">Name</Label>
-                                <Input 
-                                    id="name" 
-                                    value={data.name} 
-                                    onChange={e => setData('name', e.target.value)} 
-                                />
-                                {errors.name && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.name}
-                                    </p>
-                                }
+                        <div className="rounded-md border p-5 flex flex-col gap-4">
+                            <div className="flex justify-between gap-4">
+                                <div className="w-1/2">
+                                    <Label htmlFor="name" className="mb-2">Name</Label>
+                                    <Input 
+                                        id="name" 
+                                        value={data.name} 
+                                        onChange={e => setData('name', e.target.value)} 
+                                    />
+                                    {errors.name && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.name}
+                                        </p>
+                                    }
+                                </div>
+
+                                <div className="w-1/2">
+                                    <Label htmlFor="email" className="mb-2">Email</Label>
+                                    <Input 
+                                        id="email" 
+                                        value={data.email} 
+                                        onChange={e => setData('email', e.target.value)} 
+                                    />
+                                    {errors.email && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.email}
+                                        </p>
+                                    }
+                                </div>
                             </div>
 
-                            <div className="w-1/2">
-                                <Label htmlFor="email" className="mb-2">Email</Label>
-                                <Input 
-                                    id="email" 
-                                    value={data.email} 
-                                    onChange={e => setData('email', e.target.value)} 
-                                />
-                                {errors.email && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.email}
-                                    </p>
-                                }
+                            <div className="flex justify-between gap-4">
+                                <div>
+                                    <Label className="mb-2">Roles</Label>
+                                    <MultiSelect 
+                                        options={multiSelectRoles} 
+                                        placeholder="Select role..." 
+                                        selected={data.roles}
+                                        onChange={(values) => setData('roles', values)}
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="flex justify-between gap-4">
-                            <div>
-                                <Label className="mb-2">Roles</Label>
-                                <MultiSelect 
-                                    options={multiSelectRoles} 
-                                    placeholder="Select role..." 
-                                    selected={data.roles}
-                                    onChange={(values) => setData('roles', values)}
-                                />
+                        <div className="rounded-md border p-5 flex flex-col gap-4">
+                            <div className="flex flex-col gap-2">
+                                <h6 className="font-bold">Billing Address</h6>
+                            </div>
+
+                            <div className="flex justify-between gap-4">
+                                <div className="w-1/3">
+                                    <Label htmlFor="billing_address_line_1" className="mb-2">Address Line 1</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.billing_address_line_1} 
+                                        onChange={e => setData('billing_address_line_1', e.target.value)} 
+                                    />
+                                    {errors.billing_address_line_1 && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.billing_address_line_1}
+                                        </p>
+                                    }
+                                </div>
+                                <div className="w-1/3">
+                                    <Label htmlFor="billing_address_line_2" className="mb-2">Address Line 2 (Optional)</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.billing_address_line_2} 
+                                        onChange={e => setData('billing_address_line_2', e.target.value)} 
+                                    />
+                                    {errors.billing_address_line_2 && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.billing_address_line_2}
+                                        </p>
+                                    }
+                                </div>
+                                <div className="w-1/3">
+                                    <Label htmlFor="billing_phone_number" className="mb-2">Phone Number</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.billing_phone_number} 
+                                        onChange={e => setData('billing_phone_number', e.target.value)} 
+                                    />
+                                    {errors.billing_phone_number && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.billing_phone_number}
+                                        </p>
+                                    }
+                                </div> 
+                            </div>
+
+                            <div className="flex justify-between gap-4">
+                                <div className="w-1/4">
+                                    <Label htmlFor="billing_city" className="mb-2">City</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.billing_city} 
+                                        onChange={e => setData('billing_city', e.target.value)} 
+                                    />
+                                    {errors.billing_city && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.billing_city}
+                                        </p>
+                                    }
+                                </div> 
+                                <div className="w-1/4">
+                                    <Label htmlFor="billing_state" className="mb-2">State</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.billing_state} 
+                                        onChange={e => setData('billing_state', e.target.value)} 
+                                    />
+                                    {errors.billing_state && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.billing_state}
+                                        </p>
+                                    }
+                                </div>
+                                <div className="w-1/4">
+                                    <Label htmlFor="billing_postal_code" className="mb-2">Postal Code</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.billing_postal_code} 
+                                        onChange={e => setData('billing_postal_code', e.target.value)} 
+                                    />
+                                    {errors.billing_postal_code && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.billing_postal_code}
+                                        </p>
+                                    }
+                                </div>
+                                <div className="w-1/4">
+                                    <Label htmlFor="billing_country" className="mb-2">Country</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.billing_country} 
+                                        onChange={e => setData('billing_country', e.target.value)} 
+                                    />
+                                    {errors.billing_country && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.billing_country}
+                                        </p>
+                                    }
+                                </div>
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-2 pt-4">
-                            <hr />
-                            <h6 className="font-bold">Billing Address</h6>
-                        </div>
+                        <div className="rounded-md border p-5 flex flex-col gap-4">
+                            <div className="flex flex-col gap-2">
+                                <h6 className="font-bold">Shipping Address</h6>
+                            </div>
 
-                        <div className="flex justify-between gap-4">
-                            <div className="w-1/3">
-                                <Label htmlFor="billing_address_line_1" className="mb-2">Address Line 1</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.billing_address_line_1} 
-                                    onChange={e => setData('billing_address_line_1', e.target.value)} 
-                                />
-                                {errors.billing_address_line_1 && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.billing_address_line_1}
-                                    </p>
-                                }
+                            <div className="flex items-center gap-4">
+                                <p className="text-xs">Copy from billing address</p>
+                                <Button
+                                    type="button"
+                                    className="flex items-center gap-2"
+                                    onClick={copyBillingToShipping}
+                                >
+                                    <Copy className="h-1 w-1" />
+                                    Copy
+                                </Button>
                             </div>
-                            <div className="w-1/3">
-                                <Label htmlFor="billing_address_line_2" className="mb-2">Address Line 2 (Optional)</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.billing_address_line_2} 
-                                    onChange={e => setData('billing_address_line_2', e.target.value)} 
-                                />
-                                {errors.billing_address_line_2 && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.billing_address_line_2}
-                                    </p>
-                                }
-                            </div>
-                            <div className="w-1/3">
-                                <Label htmlFor="billing_phone_number" className="mb-2">Phone Number</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.billing_phone_number} 
-                                    onChange={e => setData('billing_phone_number', e.target.value)} 
-                                />
-                                {errors.billing_phone_number && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.billing_phone_number}
-                                    </p>
-                                }
-                            </div> 
-                        </div>
 
-                        <div className="flex justify-between gap-4">
-                            <div className="w-1/4">
-                                <Label htmlFor="billing_city" className="mb-2">City</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.billing_city} 
-                                    onChange={e => setData('billing_city', e.target.value)} 
-                                />
-                                {errors.billing_city && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.billing_city}
-                                    </p>
-                                }
-                            </div> 
-                            <div className="w-1/4">
-                                <Label htmlFor="billing_state" className="mb-2">State</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.billing_state} 
-                                    onChange={e => setData('billing_state', e.target.value)} 
-                                />
-                                {errors.billing_state && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.billing_state}
-                                    </p>
-                                }
+                            <div className="flex justify-between gap-4">
+                                <div className="w-1/3">
+                                    <Label htmlFor="shipping_address_line_1" className="mb-2">Address Line 1</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.shipping_address_line_1} 
+                                        onChange={e => setData('shipping_address_line_1', e.target.value)} 
+                                    />
+                                    {errors.shipping_address_line_1 && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.shipping_address_line_1}
+                                        </p>
+                                    }
+                                </div>
+                                <div className="w-1/3">
+                                    <Label htmlFor="shipping_address_line_2" className="mb-2">Address Line 2 (Optional)</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.shipping_address_line_2} 
+                                        onChange={e => setData('shipping_address_line_2', e.target.value)} 
+                                    />
+                                    {errors.shipping_address_line_2 && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.shipping_address_line_2}
+                                        </p>
+                                    }
+                                </div>
+                                <div className="w-1/3">
+                                    <Label htmlFor="shipping_phone_number" className="mb-2">Phone Number</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.shipping_phone_number} 
+                                        onChange={e => setData('shipping_phone_number', e.target.value)} 
+                                    />
+                                    {errors.shipping_phone_number && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.shipping_phone_number}
+                                        </p>
+                                    }
+                                </div> 
                             </div>
-                            <div className="w-1/4">
-                                <Label htmlFor="billing_postal_code" className="mb-2">Postal Code</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.billing_postal_code} 
-                                    onChange={e => setData('billing_postal_code', e.target.value)} 
-                                />
-                                {errors.billing_postal_code && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.billing_postal_code}
-                                    </p>
-                                }
-                            </div>
-                            <div className="w-1/4">
-                                <Label htmlFor="billing_country" className="mb-2">Country</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.billing_country} 
-                                    onChange={e => setData('billing_country', e.target.value)} 
-                                />
-                                {errors.billing_country && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.billing_country}
-                                    </p>
-                                }
-                            </div>
-                        </div>
 
-                        <div className="flex flex-col gap-2 pt-4">
-                            <hr />
-                            <h6 className="font-bold">Shipping Address</h6>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                            <p className="text-xs">Copy from billing address</p>
-                            <Button
-                                type="button"
-                                className="flex items-center gap-2"
-                                onClick={copyBillingToShipping}
-                            >
-                                <Copy className="h-1 w-1" />
-                                Copy
-                            </Button>
-                        </div>
-
-                        <div className="flex justify-between gap-4">
-                            <div className="w-1/3">
-                                <Label htmlFor="shipping_address_line_1" className="mb-2">Address Line 1</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.shipping_address_line_1} 
-                                    onChange={e => setData('shipping_address_line_1', e.target.value)} 
-                                />
-                                {errors.shipping_address_line_1 && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.shipping_address_line_1}
-                                    </p>
-                                }
-                            </div>
-                            <div className="w-1/3">
-                                <Label htmlFor="shipping_address_line_2" className="mb-2">Address Line 2 (Optional)</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.shipping_address_line_2} 
-                                    onChange={e => setData('shipping_address_line_2', e.target.value)} 
-                                />
-                                {errors.shipping_address_line_2 && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.shipping_address_line_2}
-                                    </p>
-                                }
-                            </div>
-                            <div className="w-1/3">
-                                <Label htmlFor="shipping_phone_number" className="mb-2">Phone Number</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.shipping_phone_number} 
-                                    onChange={e => setData('shipping_phone_number', e.target.value)} 
-                                />
-                                {errors.shipping_phone_number && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.shipping_phone_number}
-                                    </p>
-                                }
-                            </div> 
-                        </div>
-
-                        <div className="flex justify-between gap-4">
-                            <div className="w-1/4">
-                                <Label htmlFor="shipping_city" className="mb-2">City</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.shipping_city} 
-                                    onChange={e => setData('shipping_city', e.target.value)} 
-                                />
-                                {errors.shipping_city && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.shipping_city}
-                                    </p>
-                                }
-                            </div> 
-                            <div className="w-1/4">
-                                <Label htmlFor="shipping_state" className="mb-2">State</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.shipping_state} 
-                                    onChange={e => setData('shipping_state', e.target.value)} 
-                                />
-                                {errors.shipping_state && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.shipping_state}
-                                    </p>
-                                }
-                            </div>
-                            <div className="w-1/4">
-                                <Label htmlFor="shipping_postal_code" className="mb-2">Postal Code</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.shipping_postal_code} 
-                                    onChange={e => setData('shipping_postal_code', e.target.value)} 
-                                />
-                                {errors.shipping_postal_code && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.shipping_postal_code}
-                                    </p>
-                                }
-                            </div>
-                            <div className="w-1/4">
-                                <Label htmlFor="shipping_country" className="mb-2">Country</Label>
-                                <Input 
-                                    type="text" 
-                                    value={data.shipping_country} 
-                                    onChange={e => setData('shipping_country', e.target.value)} 
-                                />
-                                {errors.shipping_country && 
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.shipping_country}
-                                    </p>
-                                }
+                            <div className="flex justify-between gap-4">
+                                <div className="w-1/4">
+                                    <Label htmlFor="shipping_city" className="mb-2">City</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.shipping_city} 
+                                        onChange={e => setData('shipping_city', e.target.value)} 
+                                    />
+                                    {errors.shipping_city && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.shipping_city}
+                                        </p>
+                                    }
+                                </div> 
+                                <div className="w-1/4">
+                                    <Label htmlFor="shipping_state" className="mb-2">State</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.shipping_state} 
+                                        onChange={e => setData('shipping_state', e.target.value)} 
+                                    />
+                                    {errors.shipping_state && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.shipping_state}
+                                        </p>
+                                    }
+                                </div>
+                                <div className="w-1/4">
+                                    <Label htmlFor="shipping_postal_code" className="mb-2">Postal Code</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.shipping_postal_code} 
+                                        onChange={e => setData('shipping_postal_code', e.target.value)} 
+                                    />
+                                    {errors.shipping_postal_code && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.shipping_postal_code}
+                                        </p>
+                                    }
+                                </div>
+                                <div className="w-1/4">
+                                    <Label htmlFor="shipping_country" className="mb-2">Country</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={data.shipping_country} 
+                                        onChange={e => setData('shipping_country', e.target.value)} 
+                                    />
+                                    {errors.shipping_country && 
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {errors.shipping_country}
+                                        </p>
+                                    }
+                                </div>
                             </div>
                         </div>
 
