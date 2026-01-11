@@ -134,8 +134,8 @@ export default function Edit({ product, categories, all_authors, all_categories 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="flex gap-4">
 
-                            <div className="w-2/3 flex flex-col gap-4">
-                                <div className="rounded-md border p-5 flex flex-col gap-4">
+                            <div className="w-2/3 flex flex-col gap-6">
+                                <div className="rounded-md border p-5 flex flex-col gap-6">
 
                                     <div className="flex justify-between gap-4">
                                         <div className="w-full">
@@ -168,7 +168,7 @@ export default function Edit({ product, categories, all_authors, all_categories 
                                     </div>
                                 </div>
 
-                                <div className="rounded-md border p-5 flex flex-col gap-4">
+                                <div className="rounded-md border p-5 flex flex-col gap-5">
                                 
                                     <div className="flex justify-between gap-4">
                                         <div className="w-1/2">
@@ -288,7 +288,7 @@ export default function Edit({ product, categories, all_authors, all_categories 
                                 </div>
                             </div>
 
-                            <div className="w-1/3 rounded-md border p-5 flex flex-col gap-4">
+                            <div className="w-1/3 rounded-md border p-5 flex flex-col gap-6">
 
                                 <div className="flex justify-between gap-4">
                                     <div className="w-full">

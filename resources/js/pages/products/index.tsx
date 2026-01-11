@@ -161,9 +161,7 @@ export default function Index({ products, authors, all_categories }: productsPag
                 return (
                     <div>
                         <img 
-                            src={`/storage/${
-                                image_path ? image_path : '/products/placeholder.png'
-                            }`} 
+                            src={image_path ? `/storage/${image_path}` : '/placeholder.png'} 
                             width={50} 
                             className="rounded-sm" 
                         />

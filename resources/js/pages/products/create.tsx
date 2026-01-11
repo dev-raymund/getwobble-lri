@@ -54,6 +54,7 @@ export default function Create({ product, all_authors, all_categories }: product
 
     const addForm = useForm({
         image: null as File | null,
+        gallery: [] as File[],
         name: '',
         regular_price: '',
         sale_price: '',
@@ -74,6 +75,28 @@ export default function Create({ product, all_authors, all_categories }: product
             addForm.setData('image', file);
             setImagePreview(URL.createObjectURL(file));
         }
+    };
+
+    const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+
+    const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+
+            const newGallery = [...addForm.data.gallery, ...files];
+            addForm.setData('gallery', newGallery);
+
+            const newPreviews = files.map(file => URL.createObjectURL(file));
+            setGalleryPreviews([...galleryPreviews, ...newPreviews]);
+        }
+    };
+
+    const removeGalleryImage = (index: number) => {
+        const newGallery = addForm.data.gallery.filter((_, i) => i !== index);
+        const newPreviews = galleryPreviews.filter((_, i) => i !== index);
+        
+        addForm.setData('gallery', newGallery);
+        setGalleryPreviews(newPreviews);
     };
 
     const TAX_STATUS = [
@@ -116,11 +139,10 @@ export default function Create({ product, all_authors, all_categories }: product
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        addForm.post(route('products.store', {
-            onSuccess: () => {
-                addForm.reset();
-            }
-        }));
+        addForm.post(route('products.store'), {
+            forceFormData: true,
+            onSuccess: () => addForm.reset(),
+        });
     };
 
     return (
@@ -130,11 +152,11 @@ export default function Create({ product, all_authors, all_categories }: product
 
                 <div className="">
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="flex gap-4">
+                        <div className="flex gap-6">
 
-                            <div className="w-2/3 flex flex-col gap-4">
+                            <div className="w-2/3 flex flex-col gap-6">
 
-                                <div className="rounded-md border p-5 flex flex-col gap-4">
+                                <div className="rounded-md border p-5 flex flex-col gap-6">
                                     <div className="flex justify-between gap-4">
                                         <div className="w-full">
                                             <Label className="mb-2">Name</Label>
@@ -167,7 +189,7 @@ export default function Create({ product, all_authors, all_categories }: product
 
                                 </div>
 
-                                <div className="rounded-md border p-5 flex flex-col gap-4">
+                                <div className="rounded-md border p-5 flex flex-col gap-6">
 
                                     <div className="flex justify-between gap-4">
                                         <div className="w-1/2">
@@ -284,7 +306,7 @@ export default function Create({ product, all_authors, all_categories }: product
                                 </div>
                             </div>
 
-                            <div className="w-1/3 rounded-md border p-5 flex flex-col gap-4">
+                            <div className="w-1/3 rounded-md border p-5 flex flex-col gap-6">
 
                                 <div className="flex justify-between gap-4">
                                     <div className="w-full">
@@ -345,6 +367,46 @@ export default function Create({ product, all_authors, all_categories }: product
 
                                         {addForm.errors.image && (
                                             <p className="text-xs text-red-500 mt-1">{addForm.errors.image}</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-between gap-4">
+                                    <div className="w-full">
+                                        <Label className="mb-2">Product Gallery</Label>
+                                        <input
+                                            type="file"
+                                            id="gallery-upload"
+                                            multiple
+                                            accept="image/*"
+                                            onChange={handleGalleryChange}
+                                            className="hidden"
+                                        />
+                                        
+                                        <div className="grid grid-cols-4 gap-2 mt-2">
+                                            {galleryPreviews.map((src, index) => (
+                                                <div key={index} className="relative aspect-square border rounded-md overflow-hidden group">
+                                                    <img src={src} className="object-cover w-full h-full" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeGalleryImage(index)}
+                                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <Plus className="w-3 h-3 rotate-45" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <label
+                                                htmlFor="gallery-upload"
+                                                className="flex flex-col items-center justify-center aspect-square border-2 border-dashed rounded-md cursor-pointer hover:bg-gray-50"
+                                            >
+                                                <Plus className="w-6 h-6 text-gray-400" />
+                                                <span className="text-[10px] text-gray-500">Add More</span>
+                                            </label>
+                                        </div>
+
+                                        {addForm.errors.gallery && (
+                                            <p className="text-xs text-red-500 mt-1">{addForm.errors.gallery}</p>
                                         )}
                                     </div>
                                 </div>

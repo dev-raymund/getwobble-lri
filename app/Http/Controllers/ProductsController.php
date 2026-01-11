@@ -68,6 +68,8 @@ class ProductsController extends Controller
     {
         $validated = $request->validate([
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'gallery' => 'nullable|array',
+            'gallery.*' => 'image|mimes:jpg,jpeg,png|max:2048',
             'name' => 'required|string|max:255|unique:products,name',
             'regular_price' => 'required|numeric|min:0',
             'sale_price' => 'nullable|numeric|min:0',
@@ -99,6 +101,17 @@ class ProductsController extends Controller
             $product->update([
                 'image' => $path
             ]);
+        }
+
+        if ($request->hasFile('gallery')) {
+            foreach ($request->file('gallery') as $file) {
+                $galleryPath = $file->store('products/gallery', 'public');
+                
+                DB::table('product_has_images')->insert([
+                    'product_id' => $product->id,
+                    'image' => $galleryPath
+                ]);
+            }
         }
 
         if ($request->has('categories')) {
