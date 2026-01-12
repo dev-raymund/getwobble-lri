@@ -373,7 +373,7 @@ export default function Create({ product, all_authors, all_categories }: product
 
                                 <div className="flex justify-between gap-4">
                                     <div className="w-full">
-                                        <Label className="mb-2">Product Gallery</Label>
+                                        <Label className="mb-2">Gallery</Label>
                                         <input
                                             type="file"
                                             id="gallery-upload"

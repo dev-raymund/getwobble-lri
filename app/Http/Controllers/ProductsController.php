@@ -172,6 +172,11 @@ class ProductsController extends Controller
      */
     public function edit(Product $product)
     {
+        $gallery = DB::table('product_has_images')
+                ->where('product_id', $product->id)
+                ->pluck('product_has_images.image')
+                ->toArray();
+
         $categories = DB::table('product_has_categories')
                 ->where('product_id', $product->id)
                 ->join('categories', 'product_has_categories.category_id', '=', 'categories.id')
@@ -180,6 +185,7 @@ class ProductsController extends Controller
 
         return Inertia::render('products/edit', [
             'product' => $product,
+            'gallery' => $gallery,
             'categories' => $categories,
             'all_categories' => Category::select('id', 'name')->get(),
             'all_authors' => User::select('id', 'name')->get()
@@ -193,6 +199,8 @@ class ProductsController extends Controller
     {
         $validated = $request->validate([
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'gallery' => 'nullable|array',
+            'gallery.*' => 'image|mimes:jpg,jpeg,png|max:2048',
             'name' => [
                 'required', 
                 'string', 
@@ -234,6 +242,28 @@ class ProductsController extends Controller
             $updateData['image'] = null;
         }
 
+        if ($request->has('removed_gallery')) {
+            foreach ($request->removed_gallery as $path) {
+                Storage::disk('public')->delete($path);
+
+                DB::table('product_has_images')
+                    ->where('product_id', $product->id)
+                    ->where('image', $path)
+                    ->delete();
+            }
+        }
+
+        if ($request->hasFile('gallery')) {
+            foreach ($request->file('gallery') as $file) {
+                $galleryPath = $file->store('products/gallery', 'public');
+                
+                DB::table('product_has_images')->insert([
+                    'product_id' => $product->id,
+                    'image' => $galleryPath,
+                ]);
+            }
+        }
+
         $product->update($updateData);
 
         if ($request->has('categories')) {
@@ -259,6 +289,7 @@ class ProductsController extends Controller
     public function destroy(Product $product)
     {
         $product->delete();
+        DB::table('product_has_categories')->where('product_id', $product->id)->delete();
         return back()->with('success', 'Product deleted successfully');
     }
 

@@ -41,12 +41,13 @@ type category = {
 
 interface editProductPageProps {
     product: product,
+    gallery: string[],
     categories: string[],
     all_authors: author[]
     all_categories: category[]
 }
 
-export default function Edit({ product, categories, all_authors, all_categories }: editProductPageProps) {
+export default function Edit({ product, gallery, categories, all_authors, all_categories }: editProductPageProps) {
 
     const { auth } = usePage<SharedData>().props;
 
@@ -56,6 +57,8 @@ export default function Edit({ product, categories, all_authors, all_categories 
     const { data, setData, post, processing, errors } = useForm({
         _method: 'put',
         image: null as File | null,
+        gallery: [] as File[],
+        removed_gallery: [] as string[],
         name: product.name || '',
         regular_price: product.regular_price || '', 
         sale_price: product.sale_price || '',
@@ -77,6 +80,40 @@ export default function Edit({ product, categories, all_authors, all_categories 
         if (file) {
             setData('image', file);
             setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const [galleryPreviews, setGalleryPreviews] = useState<string[]>(
+        gallery.map(image => `/storage/` + image)
+    );
+
+    const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+
+            const newGallery = [...files];
+            setData('gallery', newGallery);
+
+            const newPreviews = files.map(file => URL.createObjectURL(file));
+            setGalleryPreviews([...galleryPreviews, ...newPreviews]);
+        }
+    };
+
+    const removeGalleryImage = (index: number) => {
+        const itemToRemove = galleryPreviews[index];
+        
+        if (!itemToRemove.startsWith('blob:')) {
+            const rawPath = itemToRemove.replace('/storage/', '');
+            setData('removed_gallery', [...data.removed_gallery, rawPath]);
+        }
+
+        const newPreviews = galleryPreviews.filter((_, i) => i !== index);
+        setGalleryPreviews(newPreviews);
+
+        if (itemToRemove.startsWith('blob:')) {
+            const newFileIndex = index - (galleryPreviews.length - data.gallery.length);
+            const updatedFiles = data.gallery.filter((_, i) => i !== newFileIndex);
+            setData('gallery', updatedFiles);
         }
     };
 
@@ -349,6 +386,46 @@ export default function Edit({ product, categories, all_authors, all_categories 
 
                                         {errors.image && (
                                             <p className="text-xs text-red-500 mt-1">{errors.image}</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-between gap-4">
+                                    <div className="w-full">
+                                        <Label className="mb-2">Gallery</Label>
+                                        <input
+                                            type="file"
+                                            id="gallery-upload"
+                                            multiple
+                                            accept="image/*"
+                                            onChange={handleGalleryChange}
+                                            className="hidden"
+                                        />
+                                        
+                                        <div className="grid grid-cols-4 gap-2 mt-2">
+                                            {galleryPreviews.map((src, index) => (
+                                                <div key={index} className="relative aspect-square border rounded-md overflow-hidden group">
+                                                    <img src={src} className="object-cover w-full h-full" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeGalleryImage(index)}
+                                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <Plus className="w-3 h-3 rotate-45" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <label
+                                                htmlFor="gallery-upload"
+                                                className="flex flex-col items-center justify-center aspect-square border-2 border-dashed rounded-md cursor-pointer hover:bg-gray-50"
+                                            >
+                                                <Plus className="w-6 h-6 text-gray-400" />
+                                                <span className="text-[10px] text-gray-500">Add More</span>
+                                            </label>
+                                        </div>
+
+                                        {errors.gallery && (
+                                            <p className="text-xs text-red-500 mt-1">{errors.gallery}</p>
                                         )}
                                     </div>
                                 </div>
