@@ -37,8 +37,10 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Products', href: '/products' }]
 type product = { 
     id: number,
     image: string,
+    gallery: string[],
     name: string,
-    price: number,
+    regular_price: number,
+    sale_price: number,
     stock: number,
     sku: string,
     tax_status: string,
@@ -50,11 +52,11 @@ type product = {
 
 interface productsPageProps { 
     products: product[],
-    authors: { id: number; name: string }[],
+    all_authors: { id: number; name: string }[],
     all_categories: string[]
 }
 
-export default function Index({ products, authors, all_categories }: productsPageProps) {
+export default function Index({ products, all_authors, all_categories }: productsPageProps) {
 
     const { auth } = usePage<SharedData>().props;
 
@@ -90,18 +92,19 @@ export default function Index({ products, authors, all_categories }: productsPag
     const handleDuplicateProduct = (product: product) => {
         duplicateData.setData({
             name: `${product.name} (Copy)`,
-            regular_price: (product as any).regular_price?.toString() || '',
-            sale_price: (product as any).sale_price?.toString() || '',
-            stock: (product as any).stock?.toString() || '',
-            sku: `${(product as any).sku}-copy`,
-            tax_status: (product as any).tax_status || '',
-            tax_class: (product as any).tax_class || '',
-            description: (product as any).description || '',
+            regular_price: product.regular_price?.toString() || '',
+            sale_price: product.sale_price?.toString() || '',
+            stock: product.stock?.toString() || '',
+            sku: `${product.sku}-copy`,
+            tax_status: product.tax_status || '',
+            tax_class: product.tax_class || '',
+            description: product.description || '',
             author_id: product.author_id.toString(),
         });
 
         router.post(route('products.store'), {
             ...product,
+            gallery: product.gallery,
             name: `${product.name} (Copy)`,
             sku: `${(product as any).sku}-copy`,
             author_id: product.author_id
@@ -247,7 +250,7 @@ export default function Index({ products, authors, all_categories }: productsPag
             accessorKey: 'author_id',
             header: 'Author',
             cell: ({ getValue }) => { 
-                const author = authors.find(a => a.id === getValue<number>());
+                const author = all_authors.find(a => a.id === getValue<number>());
                 return <span className="font-medium">{author ? author.name : 'N/A'}</span>;
             }
         },
@@ -337,13 +340,13 @@ export default function Index({ products, authors, all_categories }: productsPag
                     />
 
                     {userPermissions.includes('create products') && (
-                        <Button 
-                            onClick={() => handleCreateClick()} 
-                            className="bg-blue-600 hover:bg-blue-700"
+                        <Button
+                            onClick={() => handleCreateClick()}
+                            variant="brand"
                         >
                             <Plus className="h-4 w-4" /> Add Product
                         </Button>
-                    )}
+                    )}  
 
                 </div>
 

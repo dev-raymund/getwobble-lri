@@ -391,7 +391,7 @@ export default function Create({ all_roles }: createUserPageProps) {
 
                         <div className="flex justify-end">
                             <div className="flex gap-2">
-                                <Button type="submit" disabled={addForm.processing} className="bg-blue-600 hover:bg-blue-700">
+                                <Button type="submit" disabled={addForm.processing} variant="brand">
                                     Create
                                 </Button>
                             </div>

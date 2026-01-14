@@ -424,9 +424,16 @@ export default function Edit({ product, gallery, categories, all_authors, all_ca
                                             </label>
                                         </div>
 
-                                        {errors.gallery && (
-                                            <p className="text-xs text-red-500 mt-1">{errors.gallery}</p>
-                                        )}
+                                        {Object.keys(errors).map((key) => {
+                                            if (key.startsWith('gallery.')) {
+                                                return (
+                                                    <p key={key} className="text-xs text-red-500 mt-1">
+                                                        {errors[key as keyof typeof errors]}
+                                                    </p>
+                                                );
+                                            }
+                                            return null;
+                                        })}
                                     </div>
                                 </div>
 
@@ -522,7 +529,7 @@ export default function Edit({ product, gallery, categories, all_authors, all_ca
 
                         <div className="flex justify-end">
                             <div className="flex gap-2">
-                                <Button type="submit" disabled={processing} className="bg-blue-600 hover:bg-blue-700">
+                                <Button type="submit" disabled={processing} variant="brand">
                                     Update
                                 </Button>
                             </div>

@@ -367,7 +367,7 @@ export default function Edit({ user, roles, billing_address, shipping_address, a
 
                         <div className="flex justify-end">
                             <div className="flex gap-2">
-                                <Button type="submit" disabled={processing} className="bg-blue-600 hover:bg-blue-700">
+                                <Button type="submit" disabled={processing} variant="brand">
                                     Update
                                 </Button>
                             </div>

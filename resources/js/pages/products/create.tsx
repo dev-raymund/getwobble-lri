@@ -12,6 +12,7 @@ import { Copy, Plus } from 'lucide-react';
 
 import { type SharedData } from '@/types';
 import { categories } from '@/routes';
+import { error } from 'console';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Create Product', href: '#' }];
 
@@ -405,9 +406,17 @@ export default function Create({ product, all_authors, all_categories }: product
                                             </label>
                                         </div>
 
-                                        {addForm.errors.gallery && (
-                                            <p className="text-xs text-red-500 mt-1">{addForm.errors.gallery}</p>
-                                        )}
+                                        {Object.keys(addForm.errors).map((key) => {
+                                            if (key.startsWith('gallery.')) {
+                                                return (
+                                                    <p key={key} className="text-xs text-red-500 mt-1">
+                                                        {addForm.errors[key as keyof typeof addForm.errors]}
+                                                    </p>
+                                                );
+                                            }
+                                            return null;
+                                        })}
+
                                     </div>
                                 </div>
 

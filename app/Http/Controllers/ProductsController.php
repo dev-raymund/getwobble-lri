@@ -40,12 +40,15 @@ class ProductsController extends Controller
                             ->pluck('categories.name')
                             ->toArray(),
                 'author_id' => $product->author_id,
+                'gallery' => DB::table('product_has_images')
+                            ->where('product_id', $product->id)
+                            ->get(),
             ];
         });
 
         return Inertia::render('products/index', [
             'products' => $products,
-            'authors' => User::select('id', 'name')->get(),
+            'all_authors' => User::select('id', 'name')->get(),
             'all_categories' => Category::pluck('name'),
         ]);
     }
@@ -67,7 +70,7 @@ class ProductsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'image' => $request->hasFile('image') ? 'image|mimes:jpg,jpeg,png|max:2048' : 'nullable|string',
             'gallery' => 'nullable|array',
             'gallery.*' => 'image|mimes:jpg,jpeg,png|max:2048',
             'name' => 'required|string|max:255|unique:products,name',
@@ -82,7 +85,7 @@ class ProductsController extends Controller
         ]);
 
         $product = Product::create([
-            'image' => $validated['image'],
+            'image' => null,
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'regular_price' => $validated['regular_price'],
@@ -101,6 +104,17 @@ class ProductsController extends Controller
             $product->update([
                 'image' => $path
             ]);
+        } elseif (is_string($request->image)) {
+
+            // For duplication of product
+            $oldPath = $request->image;
+            if (Storage::disk('public')->exists($oldPath)) {
+
+                $extension = pathinfo($oldPath, PATHINFO_EXTENSION);
+                $newPath = 'products/' . Str::random(40) . '.' . $extension;
+                Storage::disk('public')->copy($oldPath, $newPath);
+                $product->update(['image' => $newPath]);
+            }
         }
 
         if ($request->hasFile('gallery')) {
@@ -111,6 +125,22 @@ class ProductsController extends Controller
                     'product_id' => $product->id,
                     'image' => $galleryPath
                 ]);
+            }
+        } elseif (is_array($request->gallery)) {
+            foreach ($request->gallery as $file) {
+                // For duplication of product
+                $oldPath = $file->image;
+                if (Storage::disk('public')->exists($oldPath)) {
+
+                    $extension = pathinfo($oldPath, PATHINFO_EXTENSION);
+                    $newPath = 'products/gallery/' . Str::random(40) . '.' . $extension;
+                    Storage::disk('public')->copy($oldPath, $newPath);
+
+                    DB::table('product_has_images')->insert([
+                        'product_id' => $product->id,
+                        'image' => $newPath
+                    ]);
+                }
             }
         }
 
@@ -289,7 +319,13 @@ class ProductsController extends Controller
     public function destroy(Product $product)
     {
         $product->delete();
+
+        if (Storage::disk('public')->exists($product->image)) {
+            Storage::disk('public')->delete($product->image);
+        }
+
         DB::table('product_has_categories')->where('product_id', $product->id)->delete();
+
         return back()->with('success', 'Product deleted successfully');
     }
 
