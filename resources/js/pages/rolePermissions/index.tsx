@@ -261,7 +261,7 @@ export default function Index({ roles_permissions, all_permissions }: rolesPermi
             id: 'actions',
             header: 'Actions',
             cell: ({ row }) => (
-                <div className="flex gap-2">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-3">
 
                     {userPermissions.includes('edit role/permissions') && (
                         <Button 
@@ -270,21 +270,21 @@ export default function Index({ roles_permissions, all_permissions }: rolesPermi
                             className={editingRoleId === row.original.id ? "" : "text-blue-600"}
                             onClick={() => handleEditToggle(row.original)}
                         >
-                            <Edit className="h-4 w-4" />
+                            Edit
                         </Button>
                     )}
 
                     {userPermissions.includes('delete role/permissions') && (
                         <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-red-600" 
+                            variant="link" 
+                            size="sm" 
+                            className="p-0 text-red-600" 
                             onClick={() => { 
                                 setSelectedRole(row.original); 
                                 setIsDeleteRoleOpen(true); 
                             }}
                         >
-                            <Trash2 className="h-4 w-4" />
+                            Delete
                         </Button>
                     )}
 
@@ -357,7 +357,7 @@ export default function Index({ roles_permissions, all_permissions }: rolesPermi
                         <TableBody>
                             {table.getRowModel().rows.length ? (
                                 table.getRowModel().rows.map((row) => (
-                                    <TableRow key={row.id}>
+                                    <TableRow key={row.id} className="group">
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}

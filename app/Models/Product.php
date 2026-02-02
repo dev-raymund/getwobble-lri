@@ -48,5 +48,20 @@ class Product extends Model
     {
         return $this->BelongsTo(User::class, 'author_id');
     }
-    
+
+    /**
+     * Get the product's categories
+     */
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'product_has_categories');
+    }
+
+    /**
+     * Get the product's gallery images
+     */
+    public function gallery()
+    {
+        return $this->hasMany(ProductImage::class, 'product_id');
+    }
 }

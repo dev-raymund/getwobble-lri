@@ -9,6 +9,8 @@ use App\Models\Category;
 use App\Models\User;
 use Inertia\Inertia;
 
+use Illuminate\Support\Facades\Auth;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -21,7 +23,6 @@ class ProductsController extends Controller
      */
     public function index()
     {
-
         $products = Product::with('author')->get()->map(function ($product) {
             return [
                 'id' => $product->id,
@@ -34,15 +35,9 @@ class ProductsController extends Controller
                 'tax_status' => $product->tax_status,
                 'tax_class' => $product->tax_class,
                 'description' => $product->description,
-                'categories' => DB::table('product_has_categories')
-                            ->where('product_id', $product->id)
-                            ->join('categories', 'product_has_categories.category_id', '=', 'categories.id')
-                            ->pluck('categories.name')
-                            ->toArray(),
+                'categories' => $product->categories->pluck('name'),
                 'author_id' => $product->author_id,
-                'gallery' => DB::table('product_has_images')
-                            ->where('product_id', $product->id)
-                            ->get(),
+                'gallery' => $product->gallery,
             ];
         });
 
@@ -58,10 +53,34 @@ class ProductsController extends Controller
      */
     public function create(Request $request)
     {
+        $all_categories = Category::select('id', 'name')
+                ->orderBy('name')
+                ->get();
+
+        $all_authors = User::select('id', 'name')
+                ->orderBy('name')
+                ->get();
+
         return Inertia::render('products/create', [
-            'all_categories' => Category::select('id', 'name')->get(),
-            'all_authors' => User::select('id', 'name')->get()
+            'all_categories' => $all_categories,
+            'all_authors' => $all_authors
         ]);
+    }
+
+    /**
+     * Search authors (for lazy loading in select)
+     */
+    public function searchAuthors(Request $request)
+    {
+        $search = $request->query('search', '');
+        
+        $authors = User::select('id', 'name')
+                ->where('name', 'like', "%{$search}%")
+                ->orderBy('name')
+                ->limit(5)
+                ->get();
+
+        return response()->json($authors);
     }
 
     /**
@@ -72,7 +91,7 @@ class ProductsController extends Controller
         $validated = $request->validate([
             'image' => $request->hasFile('image') ? 'image|mimes:jpg,jpeg,png|max:2048' : 'nullable|string',
             'gallery' => 'nullable|array',
-            'gallery.*' => 'image|mimes:jpg,jpeg,png|max:2048',
+            'gallery.*' => $request->hasFile('gallery') ? 'image|mimes:jpg,jpeg,png|max:2048' : 'nullable',
             'name' => 'required|string|max:255|unique:products,name',
             'regular_price' => 'required|numeric|min:0',
             'sale_price' => 'nullable|numeric|min:0',
@@ -119,25 +138,23 @@ class ProductsController extends Controller
 
         if ($request->hasFile('gallery')) {
             foreach ($request->file('gallery') as $file) {
-                $galleryPath = $file->store('products/gallery', 'public');
-                
-                DB::table('product_has_images')->insert([
-                    'product_id' => $product->id,
-                    'image' => $galleryPath
+                $path = $file->store('products/gallery', 'public');
+
+                $product->gallery()->create([
+                    'image' => $path
                 ]);
             }
         } elseif (is_array($request->gallery)) {
-            foreach ($request->gallery as $file) {
-                // For duplication of product
-                $oldPath = $file->image;
-                if (Storage::disk('public')->exists($oldPath)) {
+            foreach ($request->gallery as $item) {
+                // Handle both simple strings or objects containing 'image' key
+                $oldPath = is_array($item) ? ($item['image'] ?? null) : (is_object($item) ? $item->image : $item);
 
+                if ($oldPath && Storage::disk('public')->exists($oldPath)) {
                     $extension = pathinfo($oldPath, PATHINFO_EXTENSION);
                     $newPath = 'products/gallery/' . Str::random(40) . '.' . $extension;
                     Storage::disk('public')->copy($oldPath, $newPath);
 
-                    DB::table('product_has_images')->insert([
-                        'product_id' => $product->id,
+                    $product->gallery()->create([
                         'image' => $newPath
                     ]);
                 }
@@ -146,25 +163,14 @@ class ProductsController extends Controller
 
         if ($request->has('categories')) {
 
-            foreach ($request->categories as $catName) {
-                
-                $category = Category::where('name', $catName)->first();
+            $categoryIds = collect($request->categories)->map(function ($name) {
+                return Category::firstOrCreate(['name' => $name])->id;
+            });
 
-                $checkProductHasCategory = DB::table('product_has_categories')
-                    ->where('product_id', $product->id)
-                    ->where('category_id', $category->id)
-                    ->exists();
-
-                if (!$checkProductHasCategory) {
-                    DB::table('product_has_categories')->insert([
-                        'product_id' => $product->id,
-                        'category_id' => $category->id,
-                    ]);
-                }
-            }
+            $product->categories()->sync($categoryIds);
         }
 
-        return redirect()->route('products')->with('success', 'Product created successfully!');
+        return redirect()->back()->with('success', 'Product created successfully!');
     }
 
     /**
@@ -228,9 +234,9 @@ class ProductsController extends Controller
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'image' => $request->hasFile('image') ? 'image|mimes:jpg,jpeg,png|max:2048' : 'nullable|string',
             'gallery' => 'nullable|array',
-            'gallery.*' => 'image|mimes:jpg,jpeg,png|max:2048',
+            'gallery.*' => $request->hasFile('gallery') ? 'image|mimes:jpg,jpeg,png|max:2048' : 'nullable',
             'name' => [
                 'required', 
                 'string', 
@@ -266,9 +272,11 @@ class ProductsController extends Controller
             }
 
             $updateData['image'] = $request->file('image')->store('products', 'public');
-        } 
-        elseif ($request->input('image') === null && $product->image) {
-            Storage::disk('public')->delete($product->image);
+            
+        } elseif ($request->input('image') === null && $product->image) {
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
             $updateData['image'] = null;
         }
 
@@ -297,17 +305,12 @@ class ProductsController extends Controller
         $product->update($updateData);
 
         if ($request->has('categories')) {
-            DB::table('product_has_categories')->where('product_id', $product->id)->delete();
 
-            foreach ($request->categories as $catName) {
-                $category = Category::where('name', $catName)->first();
-                if ($category) {
-                    DB::table('product_has_categories')->insert([
-                        'product_id' => $product->id,
-                        'category_id' => $category->id,
-                    ]);
-                }
-            }
+            $categoryIds = collect($request->categories)->map(function ($name) {
+                return Category::firstOrCreate(['name' => $name])->id;
+            });
+
+            $product->categories()->sync($categoryIds);
         }
 
         return redirect()->route('products')->with('success', 'Product updated successfully!');
@@ -318,13 +321,23 @@ class ProductsController extends Controller
      */
     public function destroy(Product $product)
     {
-        $product->delete();
+        // Delete gallery images of the product
+        $galleryImages = DB::table('product_has_images')
+            ->where('product_id', $product->id)
+            ->get();
 
-        if (Storage::disk('public')->exists($product->image)) {
+        foreach ($galleryImages as $item) {
+            if (Storage::disk('public')->exists($item->image)) {
+                Storage::disk('public')->delete($item->image);
+            }
+        }
+
+        // Delete featured image of the product
+        if ($product->image && Storage::disk('public')->exists($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
 
-        DB::table('product_has_categories')->where('product_id', $product->id)->delete();
+        $product->delete();
 
         return back()->with('success', 'Product deleted successfully');
     }

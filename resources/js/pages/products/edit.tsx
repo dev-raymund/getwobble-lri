@@ -12,6 +12,9 @@ import { Copy, Plus } from 'lucide-react';
 import { type SharedData } from '@/types';
 import { MultiSelect } from '@/components/ui/multi-select';
 
+import { TAX_STATUS, TAX_CLASS } from '@/constants/tax';
+import { SearchSelect } from '@/components/ui/search-select';
+
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Edit Product', href: '#' }];
 
 type product = { 
@@ -56,7 +59,7 @@ export default function Edit({ product, gallery, categories, all_authors, all_ca
 
     const { data, setData, post, processing, errors } = useForm({
         _method: 'put',
-        image: null as File | null,
+        image: product.image ? 'existing' : null as File | null | string,
         gallery: [] as File[],
         removed_gallery: [] as string[],
         name: product.name || '',
@@ -116,18 +119,6 @@ export default function Edit({ product, gallery, categories, all_authors, all_ca
             setData('gallery', updatedFiles);
         }
     };
-
-    const TAX_STATUS = [
-        { value: "none", label: "None" },
-        { value: "taxable", label: "Taxable" },
-        { value: "shipping_only", label: "Shipping Only" }
-    ];
-
-    const TAX_CLASS = [
-        { value: "standard", label: "Standard" },
-        { value: "reduced_rate", label: "Reduced rate" },
-        { value: "zero_rate", label: "Zero rate" }
-    ];
 
     const multiSelectCategories = all_categories.map((category) => ({
         value: category.name,
@@ -440,21 +431,13 @@ export default function Edit({ product, gallery, categories, all_authors, all_ca
                                 <div className="flex justify-between gap-4">
                                     <div className="w-full">
                                         <Label className="mb-2">Author</Label>
-                                        <Select 
-                                            value={data.author_id?.toString()} 
-                                            onValueChange={(val) => setData('author_id', val)}
-                                        >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select Author" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {all_authors.map((author) => (
-                                                    <SelectItem key={author.id} value={author.id.toString()}>
-                                                        {author.name} {author.id === auth.user.id && "(You)"}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <SearchSelect
+                                            apiEndpoint="/api/products/search-authors"
+                                            selected={data.author_id}
+                                            onChange={(val: string | number) => setData('author_id', val.toString())}
+                                            placeholder="Search authors..."
+                                            allOptions={all_authors}
+                                        />
                                         {errors.author_id && 
                                             <p className="text-red-500 text-xs">
                                             {errors.author_id}

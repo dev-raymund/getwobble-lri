@@ -128,7 +128,6 @@ export default function Index({ categories }: categoriesPageProps) {
 
 
     let columns: ColumnDef<category>[] = [
-        { accessorKey: 'id', header: 'ID' },
         {
             accessorKey: 'name',
             header: 'Category Name',
@@ -148,42 +147,42 @@ export default function Index({ categories }: categoriesPageProps) {
             id: 'actions',
             header: 'Actions',
             cell: ({ row }) => (
-                <div className="flex gap-2">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-3">
 
                     {userPermissions.includes('create categories') && (
                         <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-green-600" 
+                            variant="link" 
+                            size="sm" 
+                            className="p-0 text-green-600" 
                             title="Duplicate Product"
                             onClick={() => handleDuplicateCategory(row.original)}
                         >
-                            <Copy className="h-4 w-4" />
+                            Duplicate
                         </Button>
                     )}
 
                     {userPermissions.includes('edit categories') && (
                         <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-blue-600" 
+                            variant="link" 
+                            size="sm" 
+                            className="p-0 text-blue-600" 
                             onClick={() => handleEditClick(row.original)}
                         >
-                            <Edit className="h-4 w-4" />
+                            Edit
                         </Button>
                     )}
 
                     {userPermissions.includes('delete categories') && (
                         <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-red-600" 
+                            variant="link" 
+                            size="sm" 
+                            className="p-0 text-red-600" 
                             onClick={() => { 
                                 setSelectedCategory(row.original); 
                                 setIsDeleteCategoryOpen(true); 
                             }}
                         >
-                            <Trash2 className="h-4 w-4" />
+                            Delete
                         </Button>
                     )}
 
@@ -272,7 +271,7 @@ export default function Index({ categories }: categoriesPageProps) {
                         <TableBody>
                             {table.getRowModel().rows?.length ? (
                                 table.getRowModel().rows.map((row) => (
-                                    <TableRow key={row.id}>
+                                    <TableRow key={row.id} className="group">
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell 
                                                 key={cell.id}

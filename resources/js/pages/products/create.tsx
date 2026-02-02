@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { MultiSelect } from "@/components/ui/multi-select";
+import { SearchSelect } from "@/components/ui/search-select";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Copy, Plus } from 'lucide-react';
 
 import { type SharedData } from '@/types';
-import { categories } from '@/routes';
-import { error } from 'console';
+
+import { TAX_STATUS, TAX_CLASS } from '@/constants/tax';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Create Product', href: '#' }];
 
@@ -99,18 +100,6 @@ export default function Create({ product, all_authors, all_categories }: product
         addForm.setData('gallery', newGallery);
         setGalleryPreviews(newPreviews);
     };
-
-    const TAX_STATUS = [
-        { value: "none", label: "None" },
-        { value: "taxable", label: "Taxable" },
-        { value: "shipping_only", label: "Shipping Only" }
-    ];
-
-    const TAX_CLASS = [
-        { value: "standard", label: "Standard" },
-        { value: "reduced_rate", label: "Reduced rate" },
-        { value: "zero_rate", label: "Zero rate" }
-    ];
 
     const multiSelectCategories = all_categories.map((category) => ({
         value: category.name,
@@ -423,21 +412,13 @@ export default function Create({ product, all_authors, all_categories }: product
                                 <div className="flex justify-between gap-4">
                                     <div className="w-full">
                                         <Label className="mb-2">Author</Label>
-                                        <Select
-                                            value={addForm.data.author_id}
-                                            onValueChange={(val) => addForm.setData('author_id', val)}
-                                        >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select Author" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {all_authors.map((author) => (
-                                                    <SelectItem key={author.id} value={author.id.toString()}>
-                                                        {author.name} {author.id === auth.user.id && "(You)"}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <SearchSelect
+                                            apiEndpoint="/api/products/search-authors"
+                                            selected={addForm.data.author_id}
+                                            onChange={(val: string | number) => addForm.setData('author_id', val.toString())}
+                                            placeholder="Search authors..."
+                                            allOptions={all_authors}
+                                        />
                                         {addForm.errors.author_id &&
                                             <p className="text-red-500 text-xs">
                                                 {addForm.errors.author_id}
@@ -512,7 +493,7 @@ export default function Create({ product, all_authors, all_categories }: product
 
                         <div className="flex justify-end">
                             <div className="flex gap-2">
-                                <Button type="submit" disabled={addForm.processing} className="bg-blue-600 hover:bg-blue-700">
+                                <Button type="submit" disabled={addForm.processing} variant="brand">
                                     Create
                                 </Button>
                             </div>

@@ -4,17 +4,23 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
+use App\Http\Controllers\HomeController;
+
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\RolesPermissionsController;
 
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\CategoriesController;
 
-Route::get('/', function () {
-    return Inertia::render('welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
-})->name('home');
+use App\Http\Controllers\VendorsController;
+
+// Route::get('/', function () {
+//     return Inertia::render('welcome', [
+//         'canRegister' => Features::enabled(Features::registration()),
+//     ]);
+// })->name('home');
+
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
@@ -34,6 +40,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('orders');
 });
 
+// Vendors
+Route::get('/vendors', [VendorsController::class, 'index'])
+    ->middleware(['auth', 'permission:view vendors'])
+    ->name('vendors');
+
+Route::get('/vendors/{user}/products', [VendorsController::class, 'products'])
+    ->middleware(['auth', 'permission:view products'])
+    ->name('products.vendor');
 
 // Users
 Route::get('/users', [UsersController::class, 'index'])
@@ -68,7 +82,6 @@ Route::delete('/users/{user}', [UsersController::class, 'destroy'])
     ->middleware(['auth', 'permission:delete users'])
     ->name('users.destroy');
 
-
 // Products
 Route::get('/products', [ProductsController::class, 'index'])
     ->middleware(['auth', 'permission:view products'])
@@ -77,6 +90,10 @@ Route::get('/products', [ProductsController::class, 'index'])
 Route::get('/products/create', [ProductsController::class, 'create'])
     ->middleware(['auth', 'permission:create products'])
     ->name('products.create');
+
+Route::get('/api/products/search-authors', [ProductsController::class, 'searchAuthors'])
+    ->middleware(['auth'])
+    ->name('products.search-authors');
 
 Route::get('/products/{product}', [ProductsController::class, 'edit'])
     ->middleware(['auth', 'permission:edit products'])

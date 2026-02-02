@@ -17,6 +17,7 @@ import {
     roles_permissions,
     products,
     categories, 
+    vendors,
     bookings,
     orders,
 } from '@/routes';
@@ -54,6 +55,14 @@ const mainNavItems: NavItem[] = [
         icon: Folder,
         permission: [
             'view categories',
+        ], 
+    },
+    {
+        title: 'Vendors',
+        href: vendors(),
+        icon: Users,
+        permission: [
+            'view vendors',
         ], 
     },
     {

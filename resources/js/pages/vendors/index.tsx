@@ -4,6 +4,7 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown, Edit, Plus, Trash2, X, Loader2, Copy } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -31,21 +32,35 @@ import {
 
 import { type SharedData } from '@/types';
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Vendors', href: '/vendors' }];
 
-type user = { 
+type vendor = { 
     id: number,
     name: string,
     email: string,
-    roles: string[]
 }
 
-interface usersPageProps { 
-    users: user[],
-    all_roles: string[]
+type product = { 
+    id: number,
+    image: string,
+    gallery: string[],
+    name: string,
+    regular_price: number,
+    sale_price: number,
+    stock: number,
+    sku: string,
+    tax_status: string,
+    tax_class: string,
+    description: string,
+    categories: string[], 
+    author_id: number
 }
 
-export default function Index({ users, all_roles }: usersPageProps) {
+interface vendorsPageProps { 
+    vendors: vendor[]
+}
+
+export default function Index({ vendors }: vendorsPageProps) {
 
     const { auth } = usePage<SharedData>().props;
 
@@ -57,7 +72,7 @@ export default function Index({ users, all_roles }: usersPageProps) {
 
     const [isDeleteUserOpen, setIsDeleteUserOpen] = useState(false);
     const [isDeleteRoleOpen, setIsDeleteRoleOpen] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<user | null>(null);
+    const [selectedUser, setSelectedUser] = useState<vendor | null>(null);
     const [selectedRole, setSelectedRole] = useState<{ userId: number; role: string } | null>(null);
     const [isAddingRoleToId, setIsAddingRoleToId] = useState<number | null>(null);
 
@@ -65,7 +80,11 @@ export default function Index({ users, all_roles }: usersPageProps) {
         router.get(route('users.create', {}));
     };
 
-    const handleEditClick = (user: user) => {
+    const handleViewProductsClick = (user: vendor) => {
+        router.get(route('products.vendor', {user: user.id}));
+    };
+
+    const handleEditClick = (user: vendor) => {
         router.get(route('users.edit', { user: user.id }));
     };
 
@@ -106,7 +125,7 @@ export default function Index({ users, all_roles }: usersPageProps) {
         }
     };
 
-    let columns: ColumnDef<user>[] = [
+    let columns: ColumnDef<vendor>[] = [
         {
             accessorKey: 'name',
             header: 'Name',
@@ -114,90 +133,46 @@ export default function Index({ users, all_roles }: usersPageProps) {
         },
         { accessorKey: 'email', header: 'Email' },
         {
-            accessorKey: 'roles',
-            header: 'Roles',
-            cell: ({ row, getValue }) => {
-                const roles = getValue<string[]>();
-                const userId = row.original.id;
-                const availableRoles = all_roles.filter(r => !roles.includes(r));
-                return (
-                    <div className="flex flex-wrap items-center gap-1">
-
-                        {roles?.map((role, i) => (
-                            <span key={i} className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs capitalize">
-                                {role}
-
-                                {userPermissions.includes('edit users') && (
-                                <button 
-                                    onClick={() => { 
-                                        setSelectedRole({ userId, role }); 
-                                        setIsDeleteRoleOpen(true); 
-                                    }} 
-                                    className="hover:text-red-600"
-                                >
-                                    <X className="h-3 w-3" />
-                                </button>
-                                )}
-                                
-                            </span>
-                        ))}
-
-                        {availableRoles.length > 0 && userPermissions.includes('edit users') && (
-                            isAddingRoleToId === userId ? (
-                                <Select onValueChange={(val) => handleAddRole(userId, val)}>
-                                    <SelectTrigger className="h-7 w-[130px] text-xs">
-                                        <SelectValue placeholder="Add..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {availableRoles.map(r => 
-                                            <SelectItem key={r} value={r} className="text-xs">{r}</SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            ) : (
-                                <Button 
-                                    variant="outline" 
-                                    size="icon" 
-                                    className="h-6 w-6 rounded-full border-dashed" 
-                                    onClick={() => setIsAddingRoleToId(userId)}
-                                >
-                                    <Plus className="h-3 w-3" />
-                                </Button>
-                            )
-                        )}
-                    </div>
-                );
-            },
+            id: 'status',
+            header: 'Status',
+            cell: ({ row }) => (
+                <div className=''>
+                    <Switch />
+                </div>
+            )
         },
         {
             id: 'actions',
             header: 'Actions',
             cell: ({ row }) => (
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-3">
+                <div className="flex gap-2">
 
-                    {userPermissions.includes('edit users') && (
-                        <Button 
-                            variant="link" 
-                            size="sm" 
-                            className="p-0 text-blue-600" 
-                            onClick={() => handleEditClick(row.original)}
-                        >
-                            Edit
-                        </Button>
-                    )}
-
-                    {userPermissions.includes('delete users') && (
-                        <Button 
-                            variant="link" 
-                            size="sm" 
-                            className="p-0 text-red-600" 
-                            onClick={() => { 
-                                setSelectedUser(row.original); 
-                                setIsDeleteUserOpen(true); 
-                            }}
-                        >
-                            Delete
-                        </Button>
+                    {userPermissions.includes('edit vendors') && (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-3">
+                            <Button 
+                                variant="link"
+                                size="sm"
+                                className="p-0 text-blue-600"
+                                onClick={() => handleEditClick(row.original)}
+                            >
+                                Edit
+                            </Button>
+                            <Button 
+                                variant="link"
+                                size="sm"
+                                className="p-0 text-blue-600"
+                                onClick={() => handleViewProductsClick(row.original)}
+                            >
+                                Products
+                            </Button>
+                            <Button 
+                                variant="link"
+                                size="sm"
+                                className="p-0 text-blue-600"
+                            >
+                                Orders
+                            </Button>
+                        </div>
                     )}
                 </div>
             ),
@@ -212,7 +187,7 @@ export default function Index({ users, all_roles }: usersPageProps) {
     }
 
     const table = useReactTable({
-        data: users,
+        data: vendors,
         columns,
         state: { sorting, globalFilter },
         initialState: {
@@ -231,7 +206,7 @@ export default function Index({ users, all_roles }: usersPageProps) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Users" />
+            <Head title="Vendors" />
             <div className="flex flex-1 flex-col gap-4 p-4">
                 <div className="flex items-center justify-between">
                     <Input 
@@ -246,7 +221,7 @@ export default function Index({ users, all_roles }: usersPageProps) {
                             onClick={() => handleCreateClick()} 
                             className="bg-blue-600 hover:bg-blue-700"
                         >
-                            <Plus className="h-4 w-4" /> Add User
+                            <Plus className="h-4 w-4" /> Create User
                         </Button>
                     )}
 
@@ -309,7 +284,7 @@ export default function Index({ users, all_roles }: usersPageProps) {
                 </div>
 
                 {/* Pagination Controls */}
-                {users.length > 0 && (
+                {vendors.length > 0 && (
                     <div className="flex items-center justify-end space-x-2 py-4">
                         <div className="flex-1 text-sm text-muted-foreground">
                             Page {table.getState().pagination.pageIndex + 1} of{" "}

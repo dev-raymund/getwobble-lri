@@ -10,6 +10,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 
 use Spatie\Permission\Traits\HasRoles;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
@@ -55,6 +56,14 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get user's products
+     */
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class, 'author_id');
     }
 
 }

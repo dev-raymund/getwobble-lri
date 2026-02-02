@@ -51,6 +51,11 @@ class DatabaseSeeder extends Seeder
             'edit categories',
             'delete categories',
 
+            'view vendors',
+            'create vendors',
+            'edit vendors',
+            'delete vendors',
+
         ];
 
         foreach ($permissions as $permission) {

@@ -153,7 +153,6 @@ export default function Index({ products, all_authors, all_categories }: product
     };
 
     let columns: ColumnDef<product>[] = [
-        { accessorKey: 'id', header: 'ID' },
         {
             accessorKey: 'image',
             header: 'Image',
@@ -258,42 +257,42 @@ export default function Index({ products, all_authors, all_categories }: product
             id: 'actions',
             header: 'Actions',
             cell: ({ row }) => (
-                <div className="flex gap-2">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-3">
 
                     {userPermissions.includes('create products') && (
                         <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-green-600" 
+                            variant="link"
+                            size="sm"
+                            className="p-0 text-green-600"
                             title="Duplicate Product"
                             onClick={() => handleDuplicateProduct(row.original)}
                         >
-                            <Copy className="h-4 w-4" />
+                            Duplicate
                         </Button>
                     )}
 
                     {userPermissions.includes('edit products') && (
                         <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-blue-600" 
+                            variant="link"
+                            size="sm"
+                            className="p-0 text-blue-600"
                             onClick={() => handleEditClick(row.original)}
                         >
-                            <Edit className="h-4 w-4" />
+                            Edit
                         </Button>
                     )}
 
                     {userPermissions.includes('delete products') && (
                         <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-red-600" 
+                            variant="link"
+                            size="sm"
+                            className="p-0 text-red-600"
                             onClick={() => { 
                                 setSelectedProduct(row.original); 
                                 setIsDeleteProductOpen(true); 
                             }}
                         >
-                            <Trash2 className="h-4 w-4" />
+                            Delete
                         </Button>
                     )}
 
@@ -343,6 +342,7 @@ export default function Index({ products, all_authors, all_categories }: product
                         <Button
                             onClick={() => handleCreateClick()}
                             variant="brand"
+                            className="bg-blue-600 hover:bg-blue-700"
                         >
                             <Plus className="h-4 w-4" /> Add Product
                         </Button>
@@ -382,7 +382,7 @@ export default function Index({ products, all_authors, all_categories }: product
                         <TableBody>
                             {table.getRowModel().rows?.length ? (
                                 table.getRowModel().rows.map((row) => (
-                                    <TableRow key={row.id}>
+                                    <TableRow key={row.id} className="group">
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell 
                                                 key={cell.id}
