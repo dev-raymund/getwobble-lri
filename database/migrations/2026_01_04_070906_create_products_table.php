@@ -23,10 +23,10 @@ return new class extends Migration
             $table->string('tax_status')->default('none');
             $table->string('tax_class')->default('standard');
             $table->string('image')->nullable();
-            $table->unsignedBigInteger('author_id');
-            $table->foreign('author_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreignId('author_id')->constrained('users')->onDelete('cascade');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

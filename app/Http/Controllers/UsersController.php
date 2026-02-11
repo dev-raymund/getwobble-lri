@@ -18,21 +18,44 @@ class UsersController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $status = $request->get('status');
 
-        $users = User::with('roles')->get()->map(function ($user) {
-            return [
+        $search = $request->get('search');
+        $perPage = $request->get('perPage', 10);
+
+        $query = User::query()->with('roles');
+
+        if ($status === 'trash') {
+            $query->onlyTrashed();
+        } elseif ($status === 'published') {
+            $query->withoutTrashed();
+        }
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%");
+        }
+
+        $users = $query->paginate($perPage)
+            ->through(fn($user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'roles' => $user->roles->pluck('name'), 
-                'created_at' => $user->created_at->format('Y-m-d'),
-            ];
-        });
+                'roles' => $user->roles->pluck('name'),
+                'deleted_at' => $user->deleted_at?->format('Y-m-d'),
+            ])
+            ->withQueryString();
 
         return Inertia::render('users/index', [
             'users' => $users,
+            'counts' => [
+                'all' => User::withTrashed()->count(),
+                'published' => User::withoutTrashed()->count(),
+                'trash' => User::onlyTrashed()->count(),
+            ],
+            'filters' => $request->only(['status', 'search']),
             'all_roles' => Role::pluck('name'),
         ]);
     }

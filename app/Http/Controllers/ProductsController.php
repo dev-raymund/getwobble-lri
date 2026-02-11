@@ -43,7 +43,7 @@ class ProductsController extends Controller
 
         return Inertia::render('products/index', [
             'products' => $products,
-            'all_authors' => User::select('id', 'name')->get(),
+            'all_authors' => [],
             'all_categories' => Category::pluck('name'),
         ]);
     }
@@ -57,13 +57,13 @@ class ProductsController extends Controller
                 ->orderBy('name')
                 ->get();
 
-        $all_authors = User::select('id', 'name')
-                ->orderBy('name')
-                ->get();
+        $authors = $request->has('search') 
+                ? User::where('name', 'like', "%{$request->search}%")->limit(10)->get(['id', 'name'])
+                : User::limit(10)->get(['id', 'name']);
 
         return Inertia::render('products/create', [
             'all_categories' => $all_categories,
-            'all_authors' => $all_authors
+            'authors' => $authors
         ]);
     }
 

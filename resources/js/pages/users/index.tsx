@@ -37,29 +37,45 @@ type user = {
     id: number,
     name: string,
     email: string,
-    roles: string[]
+    roles: string[],
+    deleted_at: string | null
 }
 
 interface usersPageProps { 
-    users: user[],
+    users: {
+        data: user[];
+        current_page: number;
+        last_page: number;
+        total: number;
+        per_page: number;
+        links: any[];
+    },
+    counts: {
+        all: number,
+        published: number,
+        trash: number
+    },
+    filters: {
+        status: string | null
+    },
     all_roles: string[]
 }
 
-export default function Index({ users, all_roles }: usersPageProps) {
-
+export default function Index({ users, counts, filters, all_roles }: usersPageProps) {
     const { auth } = usePage<SharedData>().props;
 
     const userRoles = auth.user.roles || [];
     const userPermissions = auth.user.permissions || [];
-
-    const [sorting, setSorting] = useState<SortingState>([]);
-    const [globalFilter, setGlobalFilter] = useState('');
 
     const [isDeleteUserOpen, setIsDeleteUserOpen] = useState(false);
     const [isDeleteRoleOpen, setIsDeleteRoleOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<user | null>(null);
     const [selectedRole, setSelectedRole] = useState<{ userId: number; role: string } | null>(null);
     const [isAddingRoleToId, setIsAddingRoleToId] = useState<number | null>(null);
+
+    const handleFilter = (status: string | null) => {
+        router.get(route('users'), { status }, { preserveState: true });
+    };
 
     const handleCreateClick = () => {
         router.get(route('users.create', {}));
@@ -172,35 +188,69 @@ export default function Index({ users, all_roles }: usersPageProps) {
         {
             id: 'actions',
             header: 'Actions',
-            cell: ({ row }) => (
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-3">
+            cell: ({ row }) => {
 
-                    {userPermissions.includes('edit users') && (
-                        <Button 
-                            variant="link" 
-                            size="sm" 
-                            className="p-0 text-blue-600" 
-                            onClick={() => handleEditClick(row.original)}
-                        >
-                            Edit
-                        </Button>
-                    )}
+                const isTrashed = row.original.deleted_at !== null;
 
-                    {userPermissions.includes('delete users') && (
-                        <Button 
-                            variant="link" 
-                            size="sm" 
-                            className="p-0 text-red-600" 
-                            onClick={() => { 
-                                setSelectedUser(row.original); 
-                                setIsDeleteUserOpen(true); 
-                            }}
-                        >
-                            Delete
-                        </Button>
-                    )}
-                </div>
-            ),
+                return (
+
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-3">
+
+                        {isTrashed ? (
+                            <>
+                                {userPermissions.includes('edit users') && (
+                                    <Button 
+                                        variant="link" 
+                                        className="p-0 text-green-600" 
+                                        onClick={() => router.post(route('users.restore', row.original.id))}
+                                    >
+                                        Restore
+                                    </Button>
+                                )}
+
+                                {userPermissions.includes('delete users') && (
+                                    <Button 
+                                        variant="link" 
+                                        className="p-0 text-red-700 font-bold" 
+                                        onClick={() => {/* Trigger Force Delete Modal */}}
+                                    >
+                                        Delete Permanently
+                                    </Button>
+                                )}
+
+                            </>
+                        ) : (
+
+                            <>
+                                {userPermissions.includes('edit users') && (
+                                    <Button 
+                                        variant="link" 
+                                        size="sm" 
+                                        className="p-0 text-blue-600" 
+                                        onClick={() => handleEditClick(row.original)}
+                                    >
+                                        Edit
+                                    </Button>
+                                )}
+
+                                {userPermissions.includes('delete users') && (
+                                    <Button 
+                                        variant="link" 
+                                        size="sm" 
+                                        className="p-0 text-red-600" 
+                                        onClick={() => { 
+                                            setSelectedUser(row.original); 
+                                            setIsDeleteUserOpen(true); 
+                                        }}
+                                    >
+                                        Trash
+                                    </Button>
+                                )}
+                            </>
+                        )}
+                    </div>
+                )
+            },
         },
     ];
 
@@ -211,22 +261,32 @@ export default function Index({ users, all_roles }: usersPageProps) {
         columns = columns.filter(col => col.id !== 'actions');
     }
 
+    const handlePageChange = (page: number) => {
+        router.get(route('users'), { 
+            ...filters, 
+            page: page 
+        }, { preserveState: true, preserveScroll: true });
+    };
+
+    const handleSearch = (value: string) => {
+        router.get(route('users'), { 
+            ...filters, 
+            search: value 
+        }, { preserveState: true, replace: true });
+    };
+
     const table = useReactTable({
-        data: users,
+        data: users.data,
         columns,
-        state: { sorting, globalFilter },
-        initialState: {
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        pageCount: users.last_page, 
+        state: {
             pagination: {
-                pageSize: 8,
+                pageIndex: users.current_page - 1,
+                pageSize: users.per_page,
             },
         },
-        autoResetPageIndex: false, 
-        onSortingChange: setSorting,
-        onGlobalFilterChange: setGlobalFilter,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
     });
 
     return (
@@ -235,9 +295,8 @@ export default function Index({ users, all_roles }: usersPageProps) {
             <div className="flex flex-1 flex-col gap-4 p-4">
                 <div className="flex items-center justify-between">
                     <Input 
-                        placeholder="Search..." 
-                        value={globalFilter ?? ""} 
-                        onChange={(e) => setGlobalFilter(e.target.value)} 
+                        placeholder="Search Name or Email..." 
+                        onChange={(e) => handleSearch(e.target.value)} 
                         className="max-w-sm" 
                     />
 
@@ -250,6 +309,18 @@ export default function Index({ users, all_roles }: usersPageProps) {
                         </Button>
                     )}
 
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <Button onClick={() => handleFilter(null)} variant="link" size="sm" className="p-0 text-blue-600">
+                        All ({counts.all})
+                    </Button>
+                    <Button onClick={() => handleFilter('published')} variant="link" size="sm" className="p-0 text-blue-600">
+                        Published ({counts.published})
+                    </Button>
+                    <Button onClick={() => handleFilter('trash')} variant="link" size="sm" className="p-0 text-blue-600">
+                        Bin ({counts.trash})
+                    </Button>
                 </div>
 
                 <div className="rounded-md border">
@@ -309,32 +380,30 @@ export default function Index({ users, all_roles }: usersPageProps) {
                 </div>
 
                 {/* Pagination Controls */}
-                {users.length > 0 && (
-                    <div className="flex items-center justify-end space-x-2 py-4">
-                        <div className="flex-1 text-sm text-muted-foreground">
-                            Page {table.getState().pagination.pageIndex + 1} of{" "}
-                            {table.getPageCount()}
-                        </div>
-                        <div className="space-x-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => table.previousPage()}
-                                disabled={!table.getCanPreviousPage()}
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => table.nextPage()}
-                                disabled={!table.getCanNextPage()}
-                            >
-                                Next
-                            </Button>
-                        </div>
+
+                <div className="flex items-center justify-end space-x-2 py-4">
+                    <div className="flex-1 text-sm text-muted-foreground">
+                        Showing {users.data.length} of {users.total} users
                     </div>
-                )}
+                    <div className="space-x-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(users.current_page - 1)}
+                            disabled={users.current_page <= 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(users.current_page + 1)}
+                            disabled={users.current_page >= users.last_page}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
 
                 {/* MODAL: DELETE USER */}
                 <AlertDialog open={isDeleteUserOpen} onOpenChange={setIsDeleteUserOpen}>

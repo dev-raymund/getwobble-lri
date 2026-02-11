@@ -12,6 +12,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
@@ -20,6 +21,8 @@ class User extends Authenticatable
 
     /** @use HasRoles */
     use HasRoles;
+
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.

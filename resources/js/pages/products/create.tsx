@@ -43,11 +43,11 @@ type category = {
 
 interface productPageProps {
     product: product,
-    all_authors: author[],
+    authors: author[],
     all_categories: category[]
 }
 
-export default function Create({ product, all_authors, all_categories }: productPageProps) {
+export default function Create({ product, authors, all_categories }: productPageProps) {
 
     const { auth } = usePage<SharedData>().props;
 
@@ -417,7 +417,7 @@ export default function Create({ product, all_authors, all_categories }: product
                                             selected={addForm.data.author_id}
                                             onChange={(val: string | number) => addForm.setData('author_id', val.toString())}
                                             placeholder="Search authors..."
-                                            allOptions={all_authors}
+                                            allOptions={authors}
                                         />
                                         {addForm.errors.author_id &&
                                             <p className="text-red-500 text-xs">

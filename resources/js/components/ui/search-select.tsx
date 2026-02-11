@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Loader2, X } from "lucide-react";
 
 type Option = { id: number | string; name: string };
@@ -19,32 +19,31 @@ export function SearchSelect({
     allOptions = []
 }: SearchSelectProps) {
     const inputRef = useRef<HTMLInputElement>(null);
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [open, setOpen] = useState(false);
     const [inputValue, setInputValue] = useState("");
     const [options, setOptions] = useState<Option[]>([]);
     const [loading, setLoading] = useState(false);
-    const [selectedLabel, setSelectedLabel] = useState("");
 
-    // Initialize selectedLabel from allOptions or selected value
-    useEffect(() => {
-        if (selected && allOptions.length > 0) {
-            const selectedOption = allOptions.find(opt => opt.id === selected || opt.id === parseInt(selected as string));
-            if (selectedOption) {
-                setSelectedLabel(selectedOption.name);
-            }
+    // Compute selectedLabel directly from props
+    const selectedLabel = selected && allOptions.length > 0
+        ? allOptions.find(opt => opt.id === selected || opt.id === parseInt(selected as string))?.name || ""
+        : "";
+
+    // Fetch options with debouncing - no useEffect needed
+    const fetchOptions = useCallback((searchValue: string) => {
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
         }
-    }, [selected, allOptions]);
 
-    // Fetch options when input changes
-    useEffect(() => {
-        if (!inputValue) {
+        if (!searchValue) {
             setOptions([]);
             return;
         }
 
-        const timer = setTimeout(() => {
-            setLoading(true);
-            fetch(`${apiEndpoint}?search=${encodeURIComponent(inputValue)}`)
+        setLoading(true);
+        debounceTimerRef.current = setTimeout(() => {
+            fetch(`${apiEndpoint}?search=${encodeURIComponent(searchValue)}`)
                 .then(res => res.json())
                 .then(data => {
                     setOptions(data);
@@ -52,20 +51,22 @@ export function SearchSelect({
                 })
                 .catch(() => setLoading(false));
         }, 300);
+    }, [apiEndpoint]);
 
-        return () => clearTimeout(timer);
-    }, [inputValue, apiEndpoint]);
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setInputValue(value);
+        fetchOptions(value);
+    };
 
     const handleSelect = (option: Option) => {
         onChange(option.id);
-        setSelectedLabel(option.name);
         setInputValue("");
         setOpen(false);
     };
 
     const handleClear = () => {
         onChange("");
-        setSelectedLabel("");
         setInputValue("");
     };
 

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('user_shipping_address', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('address_line_1')->nullable();
             $table->string('address_line_2')->nullable();
             $table->string('phone_number')->nullable();
